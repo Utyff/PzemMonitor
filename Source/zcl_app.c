@@ -20,7 +20,6 @@
 #include "hal_drivers.h"
 
 #include "Debug.h"
-#include "factory_reset.h"
 #include "pzem.h"
 
 #include "version.h"
@@ -121,7 +120,7 @@ void zclApp_LeaveNetwork(void);
 void zclApp_ReportOnOff(void);
 
 // Отправка отчета о температуре
-//void zclApp_ReportTemp(void);
+void zclApp_ReportTemp(void);
 
 /*********************************************************************
  * ZCL General Profile Callback table
@@ -225,7 +224,7 @@ void zclApp_Init(byte task_id) {
     // read PZEM every 5 sec
     osal_start_reload_timer(zclApp_TaskID, APP_PZEM_READ_EVT, 5000);
     // report measured data every 1 min
-    osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, 60 * 1000);
+    osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, ((uint32) 60 * 1000));
 }
 
 /*********************************************************************
@@ -292,8 +291,8 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     }
 
     if (events & APP_REPORT_EVT) {
-        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
-//        zclApp_ReportTemp();
+//        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
+        zclApp_ReportTemp();
         firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
     }
@@ -678,38 +677,34 @@ void zclApp_ReportOnOff(void) {
 }
 
 // Информирование о температуре
-//void zclApp_ReportTemp(void) {
-//    // читаем температуру
-//    zclApp_MeasuredValue = 160; //readTemperature();
-//
-//    const uint8 NUM_ATTRIBUTES = 1;
-//
-//    zclReportCmd_t *pReportCmd;
-//
-//    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
-//                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
-//    if (pReportCmd != NULL) {
-//        pReportCmd->numAttr = NUM_ATTRIBUTES;
-//
-//        pReportCmd->attrList[0].attrID = ATTRID_MS_TEMPERATURE_MEASURED_VALUE;
-//        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_INT16;
-//        pReportCmd->attrList[0].attrData = (void *) (&zclApp_MeasuredValue);
-//
-//        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
-//        zclApp_DstAddr.addr.shortAddr = 0;
-//        zclApp_DstAddr.endPoint = 1;
-//
-//        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
-//                          ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportCmd,
-//                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
-//    }
-//
-//    osal_mem_free(pReportCmd);
-//}
+void zclApp_ReportTemp(void) {
+    const uint8 NUM_ATTRIBUTES = 1;
+
+    zclReportCmd_t *pReportCmd;
+
+    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
+                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
+    if (pReportCmd != NULL) {
+        pReportCmd->numAttr = NUM_ATTRIBUTES;
+
+        pReportCmd->attrList[0].attrID = ATTRID_MS_TEMPERATURE_MEASURED_VALUE;
+        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_INT16;
+        pReportCmd->attrList[0].attrData = (void *) (&zclApp_MeasuredValue);
+
+        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
+        zclApp_DstAddr.addr.shortAddr = 0;
+        zclApp_DstAddr.endPoint = 1;
+
+        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
+                          ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportCmd,
+                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
+    }
+
+    osal_mem_free(pReportCmd);
+}
 
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {
     if (portAndAction & KEY1_PORT) { // P2_0 Btn1 TODO add check BUTTON pin
-        zclFactoryResetter_HandleKeys(portAndAction, keyCode);
         if (portAndAction & HAL_KEY_PRESS) {
             LREP("Key pressed. Clicks - %d\r\n", clicks);
             if (clicks < 2) {

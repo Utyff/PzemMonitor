@@ -4206,9 +4206,6 @@
             <name>$PROJ_DIR$\..\zstack-lib\Debug.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\zstack-lib\factory_reset.c</name>
-        </file>
-        <file>
             <name>$PROJ_DIR$\..\zstack-lib\hal_key.c</name>
         </file>
     </group>

@@ -26,7 +26,6 @@
 
 #define BTN_HOLD_TIME 2000
 #define BTN_DBL_CLICK_TIME 250
-#define FACTORY_RESET_HOLD_TIME_LONG 10000
 
 // choose one debug option. UART port number depend on it
 #define DEBUG_PZEM_UART

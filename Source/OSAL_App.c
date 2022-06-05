@@ -6,7 +6,6 @@
 #include "APS.h"
 #include "ZDApp.h"
 
-#include "factory_reset.h"
 #include "Debug.h"
 
 #include "bdb_interface.h"
@@ -26,8 +25,7 @@ const pTaskEventHandlerFn tasksArr[] = {
         ZDApp_event_loop,
         zcl_event_loop,
         bdb_event_loop,
-        zclApp_event_loop,
-        zclFactoryResetter_loop
+        zclApp_event_loop
 };
 
 const uint8 tasksCnt = sizeof(tasksArr) / sizeof(tasksArr[0]);
@@ -59,6 +57,5 @@ void osalInitTasks(void) {
     ZDApp_Init(taskID++);
     zcl_Init(taskID++);
     bdb_Init(taskID++);
-    zclApp_Init(taskID++);
-    zclFactoryResetter_Init(taskID);
+    zclApp_Init(taskID);
 }

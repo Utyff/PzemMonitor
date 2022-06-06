@@ -5,6 +5,7 @@
 #include "zcl_general.h"
 #include "zcl_ha.h"
 #include "zcl_ms.h"
+#include "zcl_electrical_measurement.h"
 
 #include "zcl_app.h"
 
@@ -71,9 +72,6 @@ uint8 zclApp_LocationDescription[17] = { 16, ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
 uint8 zclApp_PhysicalEnvironment = 0;
 uint8 zclApp_DeviceEnable = DEVICE_ENABLED;
 
-// Identify Cluster
-uint16 zclApp_IdentifyTime;
-
 // Состояние реле
 extern uint8 RELAY_STATE;
 
@@ -109,16 +107,12 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   { BASIC,{ATTRID_BASIC_PHYSICAL_ENV,      ZCL_ENUM8,    W, (void *)&zclApp_PhysicalEnvironment} },
   { BASIC,{ATTRID_BASIC_DEVICE_ENABLED,    ZCL_BOOLEAN,  W, (void *)&zclApp_DeviceEnable} },
 
-#ifdef ZCL_IDENTIFY
-  // *** Identify Cluster Attribute ***
-  {ZCL_CLUSTER_ID_GEN_IDENTIFY,{ATTRID_IDENTIFY_TIME, ZCL_UINT16,W,(void *)&zclApp_IdentifyTime} },
-#endif
-
   { BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
-  { ZCL_CLUSTER_ID_GEN_IDENTIFY,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
+
   // *** Атрибуты On/Off кластера ***
   { ZCL_CLUSTER_ID_GEN_ON_OFF,{ATTRID_ON_OFF,           ZCL_BOOLEAN, R, (void *)&RELAY_STATE} },
   { ZCL_CLUSTER_ID_GEN_ON_OFF,{ATTRID_CLUSTER_REVISION, ZCL_UINT16,R | ACCESS_CLIENT, (void *)&zclApp_clusterRevision_all} },
+
   // *** Атрибуты Temperature Measurement кластера ***
   // Значение температуры
   { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_MS_TEMPERATURE_MEASURED_VALUE, ZCL_INT16,RR, (void *)&zclApp_MeasuredValue} },
@@ -128,6 +122,16 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_MS_TEMPERATURE_MAX_MEASURED_VALUE, ZCL_INT16, R, (void *)&zclApp_MaxMeasuredValue} },
   // версия кластера
   { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
+
+  // Electrical Measurements Cluster Attributes
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,          ZCL_UINT16, R, (void *)&measurement.voltage} },
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,          ZCL_UINT32, R, (void *)&measurement.current} },
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_APPARENT_POWER,       ZCL_UINT32, R, (void *)&measurement.power} },
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_APPARENT_POWER, ZCL_UINT32, R, (void *)&measurement.energy} },
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,         ZCL_UINT16, R, (void *)&measurement.frequency} },
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,         ZCL_UINT16, R, (void *)&measurement.powerFactor} },
+
+  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
 };
 
 uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0]) );
@@ -138,18 +142,15 @@ uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0
 // This is the Cluster ID List and should be filled with Application
 // specific cluster IDs.
 const cId_t zclApp_InClusterList[] = {
-  BASIC, ZCL_CLUSTER_ID_GEN_IDENTIFY,
-  // APP_TODO: Add application specific Input Clusters Here.
-  //       See zcl.h for Cluster ID definitions
+  BASIC,
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT
 };
 
 #define ZCLAPP_MAX_INCLUSTERS   (sizeof(zclApp_InClusterList) / sizeof(zclApp_InClusterList[0]))
 
 
 const cId_t zclApp_OutClusterList[] = {
-  BASIC,
-  // APP_TODO: Add application specific Output Clusters Here.
-  //       See zcl.h for Cluster ID definitions
+  BASIC
 };
 
 #define ZCLAPP_MAX_OUTCLUSTERS  (sizeof(zclApp_OutClusterList) / sizeof(zclApp_OutClusterList[0]))
@@ -201,7 +202,10 @@ void zclApp_ResetAttributesToDefaultValues(void) {
     zclApp_PhysicalEnvironment = PHY_UNSPECIFIED_ENV;
     zclApp_DeviceEnable = DEVICE_ENABLED;
 
-#ifdef ZCL_IDENTIFY
-    zclApp_IdentifyTime = 0;
-#endif
+    measurement.voltage = 0;
+    measurement.current = 0;
+    measurement.power = 0;
+    measurement.energy = 0;
+    measurement.frequency = 0;
+    measurement.powerFactor = 0;
 }

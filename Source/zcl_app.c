@@ -20,7 +20,6 @@
 #include "hal_drivers.h"
 
 #include "Debug.h"
-#include "pzem.h"
 
 #include "version.h"
 
@@ -67,7 +66,7 @@ afAddrType_t zclApp_DstAddr;
 uint8 SeqNum = 0;
 
 // last PZEM measured data
-static Pzem_measurement_t measurement;
+Pzem_measurement_t measurement;
 static bool firstRead;
 
 /*********************************************************************
@@ -239,7 +238,7 @@ void zclApp_Init(byte task_id) {
 uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     (void) task_id;  // Intentionally unreferenced parameter
-    LREP("events 0x%x \r\n", events);
+    LREP("events 0x%x\r\n", events);
 
     if (events & SYS_EVENT_MSG) {
         afIncomingMSGPacket_t *MSGpkt;
@@ -682,8 +681,7 @@ void zclApp_ReportTemp(void) {
 
     zclReportCmd_t *pReportCmd;
 
-    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
-                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
+    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) + (NUM_ATTRIBUTES * sizeof(zclReport_t)));
     if (pReportCmd != NULL) {
         pReportCmd->numAttr = NUM_ATTRIBUTES;
 
@@ -704,6 +702,8 @@ void zclApp_ReportTemp(void) {
 }
 
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {
+    (void) keyCode;
+
     if (portAndAction & KEY1_PORT) { // P2_0 Btn1 TODO add check BUTTON pin
         if (portAndAction & HAL_KEY_PRESS) {
             LREP("Key pressed. Clicks - %d\r\n", clicks);

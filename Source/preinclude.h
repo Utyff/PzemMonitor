@@ -9,8 +9,9 @@
 #define ZCL_IDENTIFY
 #define ZCL_ON_OFF
 #define ZCL_REPORTING_DEVICE
+#define ZCL_ELECTRICAL_MEASUREMENT
 
-#define BDB_REPORTING TRUE
+//#define BDB_REPORTING TRUE
 #define DISABLE_GREENPOWER_BASIC_PROXY
 #define DEFAULT_CHANLIST 0x07FFF800  // Маска для работы на всех каналах
 

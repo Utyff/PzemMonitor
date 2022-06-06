@@ -10,6 +10,7 @@ extern "C"
  * INCLUDES
  */
 #include "zcl.h"
+#include "pzem.h"
 
 
 // Added to include ZLL Target functionality
@@ -71,6 +72,7 @@ extern CONST uint8 zclApp_NumAttributes;
 extern uint16 zclApp_IdentifyTime;
 extern uint8  zclApp_IdentifyCommissionState;
 
+extern Pzem_measurement_t measurement;
 
 /*********************************************************************
  * FUNCTIONS

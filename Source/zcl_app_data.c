@@ -64,7 +64,7 @@ const uint16 zclApp_clusterRevision_all = 0x0001;
 const uint8 zclApp_HWRevision = APP_HWVERSION;
 const uint8 zclApp_ZCLVersion = APP_ZCLVERSION;
 const uint8 zclApp_ManufacturerName[] = { 6, 'D', 'I', 'Y', 'R', 'u', 'Z' };
-const uint8 zclApp_ModelId[] = {9, 'D', 'I', 'Y', 'R', 'u', 'Z', '_', 'R', 'T' };
+const uint8 zclApp_ModelId[] = {18, 'D', 'I', 'Y', 'R', 'u', 'Z', '_', 'P', 'z', 'e', 'm', 'M', 'o', 'n', 'i', 't', 'o', 'r' };
 //const uint8 zclApp_DateCode[] = { 8, '2', '0', '2', '1', '1', '2', '1', '9' };
 const uint8 zclApp_PowerSource = POWER_SOURCE_MAINS_1_PHASE;
 
@@ -159,8 +159,7 @@ const cId_t zclApp_OutClusterList[] = {
 SimpleDescriptionFormat_t zclApp_Desc = {
   APP_ENDPOINT,                  //  int Endpoint;
   ZCL_HA_PROFILE_ID,             //  uint16 AppProfId;
-  // APP_TODO: Replace ZCL_HA_DEVICEID_ON_OFF_LIGHT with application specific device ID
-  ZCL_HA_DEVICEID_ON_OFF_LIGHT,  //  uint16 AppDeviceId;
+  ZCL_HA_DEVICEID_METER_INTERFACE,//  uint16 AppDeviceId;
   APP_DEVICE_VERSION,            //  int   AppDevVer:4;
   APP_FLAGS,                     //  int   AppFlags:4;
   ZCLAPP_MAX_INCLUSTERS,         //  byte  AppNumInClusters;

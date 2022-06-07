@@ -6,7 +6,7 @@
 
 #include "zcl.h"
 #include "zcl_general.h"
-#include "zcl_ms.h"
+#include "zcl_electrical_measurement.h"
 #include "zcl_app.h"
 
 #include "bdb.h"
@@ -685,16 +685,16 @@ void zclApp_ReportTemp(void) {
     if (pReportCmd != NULL) {
         pReportCmd->numAttr = NUM_ATTRIBUTES;
 
-        pReportCmd->attrList[0].attrID = ATTRID_MS_TEMPERATURE_MEASURED_VALUE;
+        pReportCmd->attrList[0].attrID = ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE;
         pReportCmd->attrList[0].dataType = ZCL_DATATYPE_INT16;
-        pReportCmd->attrList[0].attrData = (void *) (&zclApp_MeasuredValue);
+        pReportCmd->attrList[0].attrData = (void *) (&measurement.voltage);
 
         zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
         zclApp_DstAddr.addr.shortAddr = 0;
         zclApp_DstAddr.endPoint = 1;
 
         zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
-                          ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, pReportCmd,
+                          ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, pReportCmd,
                           ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
     }
 

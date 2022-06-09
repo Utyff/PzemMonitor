@@ -116,10 +116,10 @@ static void applyRelay(void);
 void zclApp_LeaveNetwork(void);
 
 // Отправка отчета о состоянии реле
-void zclApp_ReportOnOff(void);
+//void zclApp_ReportOnOff(void);
 
 // Отправка отчета о температуре
-void zclApp_ReportTemp(void);
+void zclApp_ReportData(void);
 
 /*********************************************************************
  * ZCL General Profile Callback table
@@ -291,7 +291,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     if (events & APP_REPORT_EVT) {
 //        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
-        zclApp_ReportTemp();
+        zclApp_ReportData();
         firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
     }
@@ -596,7 +596,7 @@ void updateRelay(bool value) {
     // Отображаем новое состояние
     applyRelay();
     // отправляем отчет
-    zclApp_ReportOnOff();
+//    zclApp_ReportOnOff();
 }
 
 // Применение состояние реле
@@ -649,35 +649,35 @@ static void zclApp_OnOffCB(uint8 cmd) {
 }
 
 // Информирование о состоянии реле
-void zclApp_ReportOnOff(void) {
-    const uint8 NUM_ATTRIBUTES = 1;
-
-    zclReportCmd_t *pReportCmd;
-
-    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
-                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
-    if (pReportCmd != NULL) {
-        pReportCmd->numAttr = NUM_ATTRIBUTES;
-
-        pReportCmd->attrList[0].attrID = ATTRID_ON_OFF;
-        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_BOOLEAN;
-        pReportCmd->attrList[0].attrData = (void *) (&RELAY_STATE);
-
-        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
-        zclApp_DstAddr.addr.shortAddr = 0;
-        zclApp_DstAddr.endPoint = 1;
-
-        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
-                          ZCL_CLUSTER_ID_GEN_ON_OFF, pReportCmd,
-                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
-    }
-
-    osal_mem_free(pReportCmd);
-}
+//void zclApp_ReportOnOff(void) {
+//    const uint8 NUM_ATTRIBUTES = 1;
+//
+//    zclReportCmd_t *pReportCmd;
+//
+//    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
+//                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
+//    if (pReportCmd != NULL) {
+//        pReportCmd->numAttr = NUM_ATTRIBUTES;
+//
+//        pReportCmd->attrList[0].attrID = ATTRID_ON_OFF;
+//        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_BOOLEAN;
+//        pReportCmd->attrList[0].attrData = (void *) (&RELAY_STATE);
+//
+//        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
+//        zclApp_DstAddr.addr.shortAddr = 0;
+//        zclApp_DstAddr.endPoint = 1;
+//
+//        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
+//                          ZCL_CLUSTER_ID_GEN_ON_OFF, pReportCmd,
+//                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
+//    }
+//
+//    osal_mem_free(pReportCmd);
+//}
 
 // Информирование о температуре
-void zclApp_ReportTemp(void) {
-    const uint8 NUM_ATTRIBUTES = 1;
+void zclApp_ReportData(void) {
+    const uint8 NUM_ATTRIBUTES = 6;
 
     zclReportCmd_t *pReportCmd;
 
@@ -685,13 +685,39 @@ void zclApp_ReportTemp(void) {
     if (pReportCmd != NULL) {
         pReportCmd->numAttr = NUM_ATTRIBUTES;
 
+        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
+        zclApp_DstAddr.addr.shortAddr = 0;
+        zclApp_DstAddr.endPoint = 1;
+
+        // voltage
         pReportCmd->attrList[0].attrID = ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE;
         pReportCmd->attrList[0].dataType = ZCL_DATATYPE_INT16;
         pReportCmd->attrList[0].attrData = (void *) (&measurement.voltage);
 
-        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
-        zclApp_DstAddr.addr.shortAddr = 0;
-        zclApp_DstAddr.endPoint = 1;
+        // current
+        pReportCmd->attrList[1].attrID = ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT;
+        pReportCmd->attrList[1].dataType = ZCL_DATATYPE_UINT32;
+        pReportCmd->attrList[1].attrData = (void *) (&measurement.current);
+
+        // power
+        pReportCmd->attrList[2].attrID = ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER;
+        pReportCmd->attrList[2].dataType = ZCL_DATATYPE_UINT32;
+        pReportCmd->attrList[2].attrData = (void *) (&measurement.power);
+
+        // energy
+        pReportCmd->attrList[3].attrID = ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER;
+        pReportCmd->attrList[3].dataType = ZCL_DATATYPE_UINT32;
+        pReportCmd->attrList[3].attrData = (void *) (&measurement.energy);
+
+        // frequency
+        pReportCmd->attrList[4].attrID = ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY;
+        pReportCmd->attrList[4].dataType = ZCL_DATATYPE_UINT16;
+        pReportCmd->attrList[4].attrData = (void *) (&measurement.frequency);
+
+        // powerFactor
+        pReportCmd->attrList[5].attrID = ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR;
+        pReportCmd->attrList[5].dataType = ZCL_DATATYPE_UINT16;
+        pReportCmd->attrList[5].attrData = (void *) (&measurement.powerFactor);
 
         zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
                           ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, pReportCmd,

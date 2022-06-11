@@ -28,8 +28,10 @@
 #define BTN_HOLD_TIME 2000
 #define BTN_DBL_CLICK_TIME 250
 
-// choose one debug option. UART port number depend on it
-#define DEBUG_PZEM_UART
+// choose one debug option.
+// DEBUG_PZEM_UART - UART0 used for PZEM, UART1 used for debug logging
+// DEBUG_LCD_UART - UART1 used for SPI LCD, UART0 used for debug logging
+//#define DEBUG_PZEM_UART
 //#define DEBUG_LCD_UART
 
 // UART for PZEM communication

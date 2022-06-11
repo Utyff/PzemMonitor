@@ -175,7 +175,7 @@
                 </option>
                 <option>
                     <name>General Xdata Stack Size</name>
-                    <state>0x400</state>
+                    <state>0x500</state>
                 </option>
                 <option>
                     <name>General Ext Stack Size</name>
@@ -3429,6 +3429,9 @@
             <name>$PROJ_DIR$\..\Source\hal_board_cfg.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\Source\hal_lcd.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\Source\OSAL_App.c</name>
         </file>
         <file>
@@ -3585,9 +3588,6 @@
                         <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB\hal_flash.c</name>
                     </file>
                     <file>
-                        <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB\hal_lcd.c</name>
-                    </file>
-                    <file>
                         <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB\hal_led.c</name>
                     </file>
                     <file>
@@ -3648,9 +3648,6 @@
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530PMP4712\hal_key.c</name>
-                    </file>
-                    <file>
-                        <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530PMP4712\hal_lcd.c</name>
                     </file>
                     <file>
                         <name>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530PMP4712\hal_led.c</name>

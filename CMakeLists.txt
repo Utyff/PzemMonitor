@@ -64,30 +64,25 @@ add_executable(PzemMonitor
         Source/preinclude.h
         Source/zcl_app.c
         Source/pzem.c
+        Source/hal_lcd.c
         Source/zcl_app_data.c
         Source/OSAL_App.c
-        zstack-lib/air_quality.h
         zstack-lib/battery.h
         zstack-lib/bettery.c
         zstack-lib/commissioning.c
         zstack-lib/commissioning.h
         zstack-lib/Debug.c
         zstack-lib/Debug.h
-        zstack-lib/ds18b20.c
-        zstack-lib/ds18b20.h
         zstack-lib/factory_reset.c
         zstack-lib/factory_reset.h
         zstack-lib/hal_i2c.c
         zstack-lib/hal_i2c.h
         zstack-lib/hal_key.c
         zstack-lib/hal_key.h
-        zstack-lib/mhz19.c
-        zstack-lib/mhz19.h
-        zstack-lib/senseair.c
-        zstack-lib/senseair.h
         zstack-lib/stdint.h
         zstack-lib/tl_resetter.c
         zstack-lib/tl_resetter.h
         zstack-lib/utils.c
         zstack-lib/utils.h
-        )
+        Source/spi.c
+        Source/spi.h)

@@ -72,6 +72,9 @@ static bool firstRead;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+void HalLcd_HW_Init(void);
+void HalLcd_HW_Control(uint8 cmd);
+
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode);
 
 static void zclApp_BtnClick(void);
@@ -170,6 +173,9 @@ void zclApp_Init(byte task_id) {
     HalLedSet(HAL_LED_ALL, HAL_LED_MODE_BLINK);
 #ifndef DEBUG_LCD_UART
     Pzem_initUart();
+#endif
+#ifndef DEBUG_PZEM_UART
+    HalLcd_HW_Init();
 #endif
 
     zclApp_TaskID = task_id;
@@ -297,13 +303,18 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     }
 
     if (events & APP_PZEM_READ_EVT) {
+#ifndef DEBUG_LCD_UART
         Pzem_RequestData(1);
+#endif
         osal_start_timerEx(zclApp_TaskID, APP_PZEM_DATA_READY_EVT, PZEM_READ_TIME);
+        HalLcd_HW_Control(0xA5);
         return (events ^ APP_PZEM_READ_EVT);
     }
 
     if (events & APP_PZEM_DATA_READY_EVT) {
+#ifndef DEBUG_LCD_UART
         pzemRead();
+#endif
         return (events ^ APP_PZEM_DATA_READY_EVT);
     }
 
@@ -311,6 +322,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
         clicks = 0;
         LREPMaster("APP_BTN_CLICK_EVT\r\n");
         zclApp_BtnClick();
+        HalLcd_HW_Control(0x5A);
         return (events ^ APP_BTN_CLICK_EVT);
     }
 

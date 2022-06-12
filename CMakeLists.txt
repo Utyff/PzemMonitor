@@ -84,5 +84,4 @@ add_executable(PzemMonitor
         zstack-lib/tl_resetter.h
         zstack-lib/utils.c
         zstack-lib/utils.h
-        Source/spi.c
-        Source/spi.h)
+        zstack-lib/hal_lcd.c)

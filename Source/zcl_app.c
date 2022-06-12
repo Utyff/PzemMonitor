@@ -307,7 +307,6 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
         Pzem_RequestData(1);
 #endif
         osal_start_timerEx(zclApp_TaskID, APP_PZEM_DATA_READY_EVT, PZEM_READ_TIME);
-        HalLcd_HW_Control(0xA5);
         return (events ^ APP_PZEM_READ_EVT);
     }
 
@@ -322,7 +321,6 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
         clicks = 0;
         LREPMaster("APP_BTN_CLICK_EVT\r\n");
         zclApp_BtnClick();
-        HalLcd_HW_Control(0x5A);
         return (events ^ APP_BTN_CLICK_EVT);
     }
 

@@ -1,10 +1,7 @@
 #include "hal_types.h"
-#include "hal_lcd.h"
 #include "OSAL.h"
 #include "OnBoard.h"
 #include "hal_assert.h"
-
-#define HAL_LCD FALSE
 
 /**************************************************************************************************
  *                                          CONSTANTS
@@ -128,6 +125,7 @@ void HalLcd_HW_WriteChar(uint8 line, uint8 col, char text);
 
 void HalLcd_HW_WriteLine(uint8 line, const char *pText);
 
+void HalLcdInit(void);
 
 /**************************************************************************************************
  * @fn      HalLcdInit

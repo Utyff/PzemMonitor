@@ -15,11 +15,6 @@
 #define DISABLE_GREENPOWER_BASIC_PROXY
 #define DEFAULT_CHANLIST 0x07FFF800  // Маска для работы на всех каналах
 
-#define HAL_LED TRUE
-#define HAL_ADC FALSE
-#define HAL_LCD FALSE
-#define BLINK_LEDS TRUE
-
 // Button - P2_0
 #define KEY1_PORT HAL_KEY_PORT2
 #define HAL_KEY_P2_INPUT_PINS BV(0)

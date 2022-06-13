@@ -19,6 +19,7 @@
 #include "hal_key.h"
 #include "hal_drivers.h"
 
+#include "sh1106.h"
 #include "Debug.h"
 
 #include "version.h"
@@ -175,7 +176,7 @@ void zclApp_Init(byte task_id) {
     Pzem_initUart();
 #endif
 #ifndef DEBUG_PZEM_UART
-    HalLcd_HW_Init();
+    SH1106_Init();
 #endif
 
     zclApp_TaskID = task_id;
@@ -298,6 +299,13 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     if (events & APP_REPORT_EVT) {
 //        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
         zclApp_ReportData();
+
+        char str[20];
+        sprintf(str, "%d", measurement.voltage);
+        SH1106_Print(2, 4, str);
+        sprintf(str, "%ld", measurement.current);
+        SH1106_Print(2, 5, str);
+
         firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
     }

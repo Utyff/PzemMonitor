@@ -63,10 +63,12 @@ file(GLOB_RECURSE SOURCES
 add_executable(PzemMonitor
         Source/preinclude.h
         Source/zcl_app.c
-        Source/pzem.c
-        Source/hal_lcd.c
         Source/zcl_app_data.c
         Source/OSAL_App.c
+        Source/pzem.c
+        Source/hal_lcd.c
+        Source/sh1106.c
+        Source/sh1106.h
         zstack-lib/battery.h
         zstack-lib/bettery.c
         zstack-lib/commissioning.c
@@ -83,5 +85,4 @@ add_executable(PzemMonitor
         zstack-lib/tl_resetter.c
         zstack-lib/tl_resetter.h
         zstack-lib/utils.c
-        zstack-lib/utils.h
-        zstack-lib/hal_lcd.c)
+        zstack-lib/utils.h)

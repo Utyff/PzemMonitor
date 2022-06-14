@@ -301,9 +301,9 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
         zclApp_ReportData();
 
         char str[20];
-        sprintf(str, "%d", measurement.voltage);
+        sprintf(str, "%6d", measurement.voltage);
         SH1106_Print(2, 4, str);
-        sprintf(str, "%ld", measurement.current);
+        sprintf(str, "%8ld", measurement.current);
         SH1106_Print(2, 5, str);
 
         firstRead = TRUE;

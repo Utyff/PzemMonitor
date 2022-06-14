@@ -144,6 +144,9 @@ static void SH1106_WD(uint8 data) {
     LCD_SPI_END()
 }
 
+/**
+ * Initialize SH1106 screen and SPI
+ */
 void SH1106_Init() {
     const uint8 contrast = 40; // 0-255
     const uint8 bright = 0x22;
@@ -157,9 +160,9 @@ void SH1106_Init() {
 
     // Perform reset
     LCD_ACTIVATE_RESET()
-    HW_WaitUs(15000); // 15 ms
+    HW_DelayUs(15000); // 15 ms
     LCD_RELEASE_RESET()
-    HW_WaitUs(15);    // 15 us
+    HW_DelayUs(15);    // 15 us
 
     // Init SH1106
     SH1106_WC(0xAE); // display off
@@ -184,15 +187,15 @@ void SH1106_Init() {
     SH1106_WC(0xAF); // turn on SSD1306 panel
 
     SH1106_FillScreen();
-    SH1106_Print(0, 0, "Hi word! 987654321");
-    SH1106_Print(1, 2, "Hi word! 987654321");
-    SH1106_Print(3, 2, "qw er");
-    SH1106_Print(1, 3, "as df");
-    SH1106_Print(5, 4, "gh ks");
+    SH1106_Print(0, 0, "Hi word! 9874321");
+    SH1106_Print(1, 1, "123456 qweqweqee");
+    SH1106_Print(2, 2, "qw er");
+    SH1106_Print(3, 3, "as df");
+    SH1106_Print(5, 1, "gh ks");
 }
 
 /**
- * Fill screen
+ * Fill screen black
  */
 static void SH1106_FillScreen(void) {
     uint8 i, j;
@@ -210,32 +213,62 @@ static void SH1106_FillScreen(void) {
     }
 }
 
+/**
+ * Print string to screen
+ * @param x column of first char
+ * @param y row of first char
+ * @param str string for print. 0x00 at the string end
+ */
 void SH1106_Print(uint8 x, uint8 y, const char *str) {
     const uint8 fontWidth = 6;
-    uint8 buf[128];
+    uint8 code;
+    uint8 start;
     uint16 dFont;
 
-    uint8 dX = 0; // x * fontWidth;
-    uint8 code = *str++;
-    while (code > 31) {
-        dFont = fontWidth * (code - 32);
-        for (uint8 i = 0; i < fontWidth; i++) {
-            buf[dX++] = SmallFont[dFont++];
-        }
-        code = *str++;
-        if (dX > SCREEN_WIDTH - fontWidth) {
-            break;
-        }
-    }
-
+    // select page number: 0-7
     SH1106_WC(0xB0 + y);
-    SH1106_WC(2 + (x * fontWidth));
-    SH1106_WC(0x10);
+    // set first pixel(row) in the page: 2-130
+    start = 2 + (x * fontWidth);
+    SH1106_WC(0x0f & (start));
+    SH1106_WC(0x10 | (0x0f & ((start) >> 4)));
 
     LCD_SPI_BEGIN()
     LCD_DO_WRITE()
-    for (int j = 0; j < dX; j++) {
-        LCD_SPI_TX(buf[j])
+
+    do {
+        code = *str++;
+        if (code < 32) {
+            break;
+        }
+        dFont = fontWidth * (code - 32);
+        for (uint8 j = 0; j < fontWidth; j++) {
+            LCD_SPI_TX(SmallFont[dFont++])
+        }
+    } while (1);
+
+    LCD_SPI_END()
+}
+
+/**
+ * Erase chars.
+ * @param x - column of first char
+ * @param y - row of first char
+ * @param count - number of characters to be erased
+ */
+void SH1106_Erase(uint8 x, uint8 y, uint8 count) {
+    const uint8 fontWidth = 6;
+
+    // set page number: 0-7
+    SH1106_WC(0xB0 + y);
+    // set pixel(row) in the page: 2-130
+    uint8 start = 2 + (x * fontWidth);
+    SH1106_WC(0x0f & (start));
+    SH1106_WC(0x10 | (0x0f & ((start) >> 4)));
+
+    LCD_SPI_BEGIN()
+    LCD_DO_WRITE()
+    for (int j = 0; j < count * fontWidth; j++) {
+        LCD_SPI_TX(0)
     }
     LCD_SPI_END()
 }
@@ -244,7 +277,7 @@ void SH1106_Print(uint8 x, uint8 y, const char *str) {
 /**
  * Wait for x us. @ 32MHz MCU clock it takes 32 "nop"s for 1 us delay.
  */
-void HW_WaitUs(uint16 microSecs) {
+void HW_DelayUs(uint16 microSecs) {
     while (microSecs--) {
         /* 32 NOPs == 1 usecs */
         asm("nop"); asm("nop"); asm("nop"); asm("nop"); asm("nop");

@@ -74,6 +74,7 @@ static bool firstRead;
  * LOCAL FUNCTIONS
  */
 void HalLcd_HW_Init(void);
+
 void HalLcd_HW_Control(uint8 cmd);
 
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode);
@@ -108,7 +109,7 @@ static uint8 zclApp_ProcessInWriteRspCmd(zclIncomingMsg_t *pInMsg);
 
 static uint8 zclApp_ProcessInDefaultRspCmd(zclIncomingMsg_t *pInMsg);
 
-void pzemRead(void);
+static void pzemRead(void);
 
 // Изменение состояние реле
 static void updateRelay(bool);
@@ -227,8 +228,8 @@ void zclApp_Init(byte task_id) {
     // Старт процесса возвращения в сеть
     bdb_StartCommissioning(BDB_COMMISSIONING_MODE_PARENT_LOST);
 
-    // read PZEM every 5 sec
-    osal_start_reload_timer(zclApp_TaskID, APP_PZEM_READ_EVT, 5000);
+    // read PZEM every 1 sec
+    osal_start_reload_timer(zclApp_TaskID, APP_PZEM_READ_EVT, 1000);
     // report measured data every 1 min
     osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, ((uint32) 60 * 1000));
 }
@@ -299,13 +300,6 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     if (events & APP_REPORT_EVT) {
 //        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
         zclApp_ReportData();
-
-        char str[20];
-        sprintf(str, "%6d", measurement.voltage);
-        SH1106_Print(2, 4, str);
-        sprintf(str, "%8ld", measurement.current);
-        SH1106_Print(2, 5, str);
-
         firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
     }
@@ -574,16 +568,31 @@ static uint8 zclApp_ProcessInDefaultRspCmd(zclIncomingMsg_t *pInMsg) {
     return (TRUE);
 }
 
-void pzemRead(void) {
+static void pzemRead(void) {
     Pzem_measurement_t m;
     if (Pzem_getData(&m)) {
+#ifndef DEBUG_PZEM_UART
+        char str[22];
+        sprintf(str, "v %6d", m.voltage);
+        SH1106_Print(2, 1, str);
+        sprintf(str, "c %8ld", m.current);
+        SH1106_Print(2, 2, str);
+        sprintf(str, "p %8ld", m.power);
+        SH1106_Print(2, 3, str);
+        sprintf(str, "e %8ld", m.energy);
+        SH1106_Print(2, 4, str);
+        sprintf(str, "f %8d", m.frequency);
+        SH1106_Print(2, 5, str);
+        sprintf(str, "pf %7d", m.powerFactor);
+        SH1106_Print(2, 6, str);
+#endif
+        measurement.energy = m.energy;
         if (firstRead) {
             firstRead = FALSE;
             zclApp_MeasuredValue = m.voltage;
             measurement.voltage = m.voltage;
             measurement.current = m.current;
             measurement.power = m.power;
-            measurement.energy = m.energy;
             measurement.frequency = m.frequency;
             measurement.powerFactor = m.powerFactor;
         } else {
@@ -591,7 +600,6 @@ void pzemRead(void) {
             measurement.voltage = (measurement.voltage + m.voltage) / 2;
             measurement.current = (measurement.current + m.current) / 2;
             measurement.power = (measurement.power + m.power) / 2;
-            measurement.energy = m.energy;
             measurement.frequency = (measurement.frequency + m.frequency) / 2;
             measurement.powerFactor = (measurement.powerFactor + m.powerFactor) / 2;
         }

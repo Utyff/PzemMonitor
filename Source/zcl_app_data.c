@@ -38,20 +38,22 @@
 //READ REPORT WRITE
 #define RRW (R | ACCESS_REPORTABLE | ACCESS_CONTROL_WRITE | ACCESS_CONTROL_AUTH_WRITE)
 
-#define BASIC ZCL_CLUSTER_ID_GEN_BASIC
-#define GEN_ON_OFF ZCL_CLUSTER_ID_GEN_ON_OFF
-#define POWER_CFG ZCL_CLUSTER_ID_GEN_POWER_CFG
+#define BASIC       ZCL_CLUSTER_ID_GEN_BASIC
+#define GEN_ON_OFF  ZCL_CLUSTER_ID_GEN_ON_OFF
+#define POWER_CFG   ZCL_CLUSTER_ID_GEN_POWER_CFG
+#define GEN_TIME    ZCL_CLUSTER_ID_GEN_TIME
 
-#define ZCL_BOOLEAN ZCL_DATATYPE_BOOLEAN
+#define ZCL_BOOLEAN  ZCL_DATATYPE_BOOLEAN
 #define ZCL_CHAR_STR ZCL_DATATYPE_CHAR_STR
-#define ZCL_ENUM8 ZCL_DATATYPE_ENUM8
-#define ZCL_UINT8 ZCL_DATATYPE_UINT8
-#define ZCL_UINT16 ZCL_DATATYPE_UINT16
-#define ZCL_INT16 ZCL_DATATYPE_INT16
-#define ZCL_INT8  ZCL_DATATYPE_INT8
-#define ZCL_INT32 ZCL_DATATYPE_INT32
-#define ZCL_UINT32 ZCL_DATATYPE_UINT32
-#define ZCL_SINGLE ZCL_DATATYPE_SINGLE_PREC
+#define ZCL_ENUM8    ZCL_DATATYPE_ENUM8
+#define ZCL_UINT8    ZCL_DATATYPE_UINT8
+#define ZCL_UINT16   ZCL_DATATYPE_UINT16
+#define ZCL_INT16    ZCL_DATATYPE_INT16
+#define ZCL_INT8     ZCL_DATATYPE_INT8
+#define ZCL_INT32    ZCL_DATATYPE_INT32
+#define ZCL_UINT32   ZCL_DATATYPE_UINT32
+#define ZCL_SINGLE   ZCL_DATATYPE_SINGLE_PREC
+#define ZCL_UTC      ZCL_DATATYPE_UTC
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -65,7 +67,6 @@ const uint8 zclApp_HWRevision = APP_HWVERSION;
 const uint8 zclApp_ZCLVersion = APP_ZCLVERSION;
 const uint8 zclApp_ManufacturerName[] = { 6, 'D', 'I', 'Y', 'R', 'u', 'Z' };
 const uint8 zclApp_ModelId[] = {18, 'D', 'I', 'Y', 'R', 'u', 'Z', '_', 'P', 'z', 'e', 'm', 'M', 'o', 'n', 'i', 't', 'o', 'r' };
-//const uint8 zclApp_DateCode[] = { 8, '2', '0', '2', '1', '1', '2', '1', '9' };
 const uint8 zclApp_PowerSource = POWER_SOURCE_MAINS_1_PHASE;
 
 uint8 zclApp_LocationDescription[17] = { 16, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
@@ -94,47 +95,47 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   // Data Type - found in zcl.h
   // Variable access control - found in zcl.h
   // Pointer to attribute variable
-  { BASIC,{ATTRID_BASIC_HW_VERSION,        ZCL_UINT8,    R, (void *)&zclApp_HWRevision} },
-  { BASIC,{ATTRID_BASIC_ZCL_VERSION,       ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion} },
-  { BASIC,{ATTRID_BASIC_APPL_VERSION,      ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion} },
-  { BASIC,{ATTRID_BASIC_STACK_VERSION,     ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion} },
-  { BASIC,{ATTRID_BASIC_SW_BUILD_ID,       ZCL_CHAR_STR, R, (void *)zclApp_DateCode} },
-  { BASIC,{ATTRID_BASIC_MANUFACTURER_NAME, ZCL_CHAR_STR, R, (void *)zclApp_ManufacturerName} },
-  { BASIC,{ATTRID_BASIC_MODEL_ID,          ZCL_CHAR_STR, R, (void *)zclApp_ModelId} },
-  { BASIC,{ATTRID_BASIC_DATE_CODE,         ZCL_CHAR_STR, R, (void *)zclApp_DateCode} },
-  { BASIC,{ATTRID_BASIC_POWER_SOURCE,      ZCL_ENUM8,    R, (void *)&zclApp_PowerSource} },
-  { BASIC,{ATTRID_BASIC_LOCATION_DESC,     ZCL_CHAR_STR, W, (void *)zclApp_LocationDescription} },
-  { BASIC,{ATTRID_BASIC_PHYSICAL_ENV,      ZCL_ENUM8,    W, (void *)&zclApp_PhysicalEnvironment} },
-  { BASIC,{ATTRID_BASIC_DEVICE_ENABLED,    ZCL_BOOLEAN,  W, (void *)&zclApp_DeviceEnable} },
+  {BASIC,{ATTRID_BASIC_HW_VERSION,        ZCL_UINT8,    R, (void *)&zclApp_HWRevision}},
+  {BASIC,{ATTRID_BASIC_ZCL_VERSION,       ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion}},
+  {BASIC,{ATTRID_BASIC_APPL_VERSION,      ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion}},
+  {BASIC,{ATTRID_BASIC_STACK_VERSION,     ZCL_UINT8,    R, (void *)&zclApp_ZCLVersion}},
+  {BASIC,{ATTRID_BASIC_SW_BUILD_ID,       ZCL_CHAR_STR, R, (void *)zclApp_DateCode}},
+  {BASIC,{ATTRID_BASIC_MANUFACTURER_NAME, ZCL_CHAR_STR, R, (void *)zclApp_ManufacturerName}},
+  {BASIC,{ATTRID_BASIC_MODEL_ID,          ZCL_CHAR_STR, R, (void *)zclApp_ModelId}},
+  {BASIC,{ATTRID_BASIC_DATE_CODE,         ZCL_CHAR_STR, R, (void *)zclApp_DateCode}},
+  {BASIC,{ATTRID_BASIC_POWER_SOURCE,      ZCL_ENUM8,    R, (void *)&zclApp_PowerSource}},
+  {BASIC,{ATTRID_BASIC_LOCATION_DESC,     ZCL_CHAR_STR, W, (void *)zclApp_LocationDescription}},
+  {BASIC,{ATTRID_BASIC_PHYSICAL_ENV,      ZCL_ENUM8,    W, (void *)&zclApp_PhysicalEnvironment}},
+  {BASIC,{ATTRID_BASIC_DEVICE_ENABLED,    ZCL_BOOLEAN,  W, (void *)&zclApp_DeviceEnable}},
 
-  { BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
+  {BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 
   // *** Атрибуты On/Off кластера ***
-  { ZCL_CLUSTER_ID_GEN_ON_OFF,{ATTRID_ON_OFF,           ZCL_BOOLEAN, R, (void *)&RELAY_STATE} },
-  { ZCL_CLUSTER_ID_GEN_ON_OFF,{ATTRID_CLUSTER_REVISION, ZCL_UINT16,R | ACCESS_CLIENT, (void *)&zclApp_clusterRevision_all} },
+  {ZCL_CLUSTER_ID_GEN_ON_OFF, {ATTRID_ON_OFF,           ZCL_BOOLEAN, R, (void *) &RELAY_STATE}},
+  {ZCL_CLUSTER_ID_GEN_ON_OFF, {ATTRID_CLUSTER_REVISION, ZCL_UINT16,  R | ACCESS_CLIENT, (void *) &zclApp_clusterRevision_all}},
 
   // *** Атрибуты Temperature Measurement кластера ***
   // Значение температуры
-  { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_MS_TEMPERATURE_MEASURED_VALUE, ZCL_INT16,RR, (void *)&zclApp_MeasuredValue} },
+  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MEASURED_VALUE,     ZCL_INT16,  RR, (void *) &zclApp_MeasuredValue}},
   // минимальное значение температуры
-  { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_MS_TEMPERATURE_MIN_MEASURED_VALUE, ZCL_INT16, R, (void *)&zclApp_MinMeasuredValue} },
+  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MIN_MEASURED_VALUE, ZCL_INT16,  R,  (void *) &zclApp_MinMeasuredValue}},
   // максимальное значение температуры
-  { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_MS_TEMPERATURE_MAX_MEASURED_VALUE, ZCL_INT16, R, (void *)&zclApp_MaxMeasuredValue} },
+  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MAX_MEASURED_VALUE, ZCL_INT16,  R,  (void *) &zclApp_MaxMeasuredValue}},
   // версия кластера
-  { ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
+  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_CLUSTER_REVISION,                  ZCL_UINT16, R,  (void *) &zclApp_clusterRevision_all}},
 
   // Electrical Measurements Cluster Attributes
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, R, (void *)&measurement.voltage} },
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, R, (void *)&measurement.current} },
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, R, (void *)&measurement.power} },
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, R, (void *)&measurement.energy} },
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, R, (void *)&measurement.frequency} },
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, R, (void *)&measurement.powerFactor} },
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, R, (void *) &measurement.voltage}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, R, (void *) &measurement.current}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, R, (void *) &measurement.power}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, R, (void *) &measurement.energy}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, R, (void *) &measurement.frequency}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, R, (void *) &measurement.powerFactor}},
 
-  { ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all} },
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 };
 
-uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0]) );
+uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0]));
 
 /*********************************************************************
  * SIMPLE DESCRIPTOR

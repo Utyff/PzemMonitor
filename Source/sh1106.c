@@ -64,7 +64,6 @@
 // macros for transmit byte
 // clear the received and transmit byte status, write tx data to buffer, wait till transmit done
 #define LCD_SPI_TX(x)          { U1CSR &= ~(BV(2) | BV(1)); U1DBUF = x; while(!(U1CSR & BV(1))); }
-#define LCD_SPI_WAIT_RXRDY()   { while(!(U1CSR & BV(1))); }
 
 // macros for DC pin control
 #define LCD_DO_WRITE()        IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  1);
@@ -187,11 +186,7 @@ void SH1106_Init() {
     SH1106_WC(0xAF); // turn on SSD1306 panel
 
     SH1106_FillScreen();
-    SH1106_Print(0, 0, "Hi word! 9874321");
-    SH1106_Print(1, 1, "123456 qweqweqee");
-    SH1106_Print(2, 2, "qw er");
-    SH1106_Print(3, 3, "as df");
-    SH1106_Print(5, 1, "gh ks");
+    SH1106_Print(2, 0, "PZEM Monitor v1.0");
 }
 
 /**
@@ -225,17 +220,17 @@ void SH1106_Print(uint8 x, uint8 y, const char *str) {
     uint8 start;
     uint16 dFont;
 
-    // select page number: 0-7
+    // select page: 0-7
     SH1106_WC(0xB0 + y);
     // set first pixel(row) in the page: 2-130
-    start = 2 + (x * fontWidth);
-    SH1106_WC(0x0f & (start));
-    SH1106_WC(0x10 | (0x0f & ((start) >> 4)));
+    start = x * fontWidth + 2;
+    SH1106_WC(0x0f & start);
+    SH1106_WC(0x0f & (start >> 4) | 0x10);
 
     LCD_SPI_BEGIN()
     LCD_DO_WRITE()
 
-    do {
+    while (1) {
         code = *str++;
         if (code < 32) {
             break;
@@ -244,7 +239,7 @@ void SH1106_Print(uint8 x, uint8 y, const char *str) {
         for (uint8 j = 0; j < fontWidth; j++) {
             LCD_SPI_TX(SmallFont[dFont++])
         }
-    } while (1);
+    }
 
     LCD_SPI_END()
 }
@@ -257,17 +252,18 @@ void SH1106_Print(uint8 x, uint8 y, const char *str) {
  */
 void SH1106_Erase(uint8 x, uint8 y, uint8 count) {
     const uint8 fontWidth = 6;
+    uint8 start;
 
-    // set page number: 0-7
+    // select page: 0-7
     SH1106_WC(0xB0 + y);
-    // set pixel(row) in the page: 2-130
-    uint8 start = 2 + (x * fontWidth);
-    SH1106_WC(0x0f & (start));
-    SH1106_WC(0x10 | (0x0f & ((start) >> 4)));
+    // set first pixel(row) in the page: 2-130
+    start = x * fontWidth + 2;
+    SH1106_WC(0x0f & start);
+    SH1106_WC(0x0f & (start >> 4) | 0x10);
 
     LCD_SPI_BEGIN()
     LCD_DO_WRITE()
-    for (int j = 0; j < count * fontWidth; j++) {
+    for (uint8 j = 0; j < count * fontWidth; j++) {
         LCD_SPI_TX(0)
     }
     LCD_SPI_END()

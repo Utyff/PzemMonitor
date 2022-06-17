@@ -60,17 +60,17 @@ extern "C"
 
 extern SimpleDescriptionFormat_t zclApp_Desc;
 
-extern CONST zclCommandRec_t zclApp_Cmds[];
+//extern CONST zclCommandRec_t zclApp_Cmds[];
 
-extern CONST uint8 zclCmdsArraySize;
+//extern CONST uint8 zclCmdsArraySize;
 
 // attribute list
 extern CONST zclAttrRec_t zclApp_Attrs[];
 extern CONST uint8 zclApp_NumAttributes;
 
 // Identify attributes
-extern uint16 zclApp_IdentifyTime;
-extern uint8  zclApp_IdentifyCommissionState;
+//extern uint16 zclApp_IdentifyTime;
+//extern uint8  zclApp_IdentifyCommissionState;
 
 extern Pzem_measurement_t measurement;
 

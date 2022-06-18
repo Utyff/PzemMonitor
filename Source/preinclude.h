@@ -26,7 +26,7 @@
 // choose one debug option.
 // DEBUG_PZEM_UART - UART0 used for PZEM, UART1 used for debug logging
 // DEBUG_LCD_UART - UART1 used for SPI LCD, UART0 used for debug logging
-//#define DEBUG_PZEM_UART
+#define DEBUG_PZEM_UART
 //#define DEBUG_LCD_UART
 
 // UART for PZEM communication

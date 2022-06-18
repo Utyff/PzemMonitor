@@ -66,7 +66,6 @@ add_executable(PzemMonitor
         Source/zcl_app_data.c
         Source/OSAL_App.c
         Source/pzem.c
-        Source/hal_lcd.c
         Source/sh1106.c
         Source/sh1106.h
         zstack-lib/battery.h

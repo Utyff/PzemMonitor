@@ -33,6 +33,7 @@ extern "C"
 #define APP_BTN_HOLD_EVT             0x0020
 #define APP_BTN_DOUBLE_EVT           0x0040
 #define APP_REPORT_EVT               0x0080
+#define APP_REPORT_CLOCK_EVT         0x0100
 
 // Added to include ZLL Target functionality
 #define APP_NUM_GRPS            2
@@ -60,6 +61,8 @@ extern SimpleDescriptionFormat_t zclApp_Desc;
 // attribute list
 extern CONST zclAttrRec_t zclApp_Attrs[];
 extern CONST uint8 zclApp_NumAttributes;
+
+extern uint32 zclApp_GenTime_TimeUTC;
 
 extern Pzem_measurement_t measurement;
 

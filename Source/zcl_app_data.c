@@ -61,6 +61,8 @@
 // Global attributes
 const uint16 zclApp_clusterRevision_all = 0x0001;
 
+uint32 zclApp_GenTime_TimeUTC = 0;
+
 // Basic Cluster
 const uint8 zclApp_HWRevision = APP_HWVERSION;
 const uint8 zclApp_ZCLVersion = APP_ZCLVERSION;
@@ -128,6 +130,9 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, R, (void *) &measurement.powerFactor}},
 
   {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
+
+  {GEN_TIME, {ATTRID_TIME_TIME,       ZCL_UTC,    RRW, (void *) &zclApp_GenTime_TimeUTC}},
+  {GEN_TIME, {ATTRID_TIME_LOCAL_TIME, ZCL_UINT32, RRW, (void *) &zclApp_GenTime_TimeUTC}},
 };
 
 uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0]));
@@ -139,7 +144,8 @@ uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0
 // specific cluster IDs.
 const cId_t zclApp_InClusterList[] = {
   BASIC,
-  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,
+  GEN_TIME
 };
 
 #define ZCLAPP_MAX_INCLUSTERS   (sizeof(zclApp_InClusterList) / sizeof(zclApp_InClusterList[0]))

@@ -39,7 +39,6 @@
 #define RRW (R | ACCESS_REPORTABLE | ACCESS_CONTROL_WRITE | ACCESS_CONTROL_AUTH_WRITE)
 
 #define BASIC       ZCL_CLUSTER_ID_GEN_BASIC
-#define GEN_ON_OFF  ZCL_CLUSTER_ID_GEN_ON_OFF
 #define POWER_CFG   ZCL_CLUSTER_ID_GEN_POWER_CFG
 #define GEN_TIME    ZCL_CLUSTER_ID_GEN_TIME
 
@@ -109,10 +108,6 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   {BASIC,{ATTRID_BASIC_DEVICE_ENABLED,    ZCL_BOOLEAN,  W, (void *)&zclApp_DeviceEnable}},
 
   {BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
-
-  // *** Атрибуты On/Off кластера ***
-  {ZCL_CLUSTER_ID_GEN_ON_OFF, {ATTRID_ON_OFF,           ZCL_BOOLEAN, R, (void *) &RELAY_STATE}},
-  {ZCL_CLUSTER_ID_GEN_ON_OFF, {ATTRID_CLUSTER_REVISION, ZCL_UINT16,  R | ACCESS_CLIENT, (void *) &zclApp_clusterRevision_all}},
 
   // *** Атрибуты Temperature Measurement кластера ***
   // Значение температуры

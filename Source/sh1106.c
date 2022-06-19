@@ -78,8 +78,6 @@ static void SPI_Config(void);
 
 static void SH1106_WC(uint8 cmd);
 
-static void SH1106_WD(uint8 data);
-
 static void SH1106_FillScreen(void);
 
 void SH1106_Print(uint8 x, uint8 y, const char *str);
@@ -130,16 +128,6 @@ static void SH1106_WC(uint8 cmd) {
     LCD_SPI_BEGIN()
     LCD_DO_CONTROL()
     LCD_SPI_TX(cmd)
-    LCD_SPI_END()
-}
-
-/**
- * Send 1 byte data
- */
-static void SH1106_WD(uint8 data) {
-    LCD_SPI_BEGIN()
-    LCD_DO_WRITE()
-    LCD_SPI_TX(data)
     LCD_SPI_END()
 }
 

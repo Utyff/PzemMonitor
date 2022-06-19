@@ -34,9 +34,6 @@ extern "C"
 #define APP_BTN_DOUBLE_EVT           0x0040
 #define APP_REPORT_EVT               0x0080
 
-// NVM IDs
-#define NV_APP_RELAY_STATE_ID        0x0402
-
 // Added to include ZLL Target functionality
 #define APP_NUM_GRPS            2
 
@@ -60,17 +57,9 @@ extern "C"
 
 extern SimpleDescriptionFormat_t zclApp_Desc;
 
-//extern CONST zclCommandRec_t zclApp_Cmds[];
-
-//extern CONST uint8 zclCmdsArraySize;
-
 // attribute list
 extern CONST zclAttrRec_t zclApp_Attrs[];
 extern CONST uint8 zclApp_NumAttributes;
-
-// Identify attributes
-//extern uint16 zclApp_IdentifyTime;
-//extern uint8  zclApp_IdentifyCommissionState;
 
 extern Pzem_measurement_t measurement;
 
@@ -78,23 +67,20 @@ extern Pzem_measurement_t measurement;
  * FUNCTIONS
  */
 
- /*
+ /**
   * Initialization for the task
   */
 extern void zclApp_Init(byte task_id);
 
-/*
+/**
  *  Event Process for the task
  */
 extern UINT16 zclApp_event_loop(byte task_id, UINT16 events);
 
-/*
+/**
  *  Reset all writable attributes to their default values.
  */
 extern void zclApp_ResetAttributesToDefaultValues(void);
-
-// Функции команд управления
-static void zclApp_OnOffCB(uint8 cmd);
 
 /*********************************************************************
 *********************************************************************/

@@ -55,9 +55,6 @@ byte zclApp_TaskID;
 // double click count
 uint8 clicks = 0;
 
-// Состояние реле
-uint8 RELAY_STATE = 0;
-
 // Данные о температуре
 uint16 zclApp_MeasuredValue;
 
@@ -69,14 +66,11 @@ uint8 SeqNum = 0;
 // last PZEM measured data
 Pzem_measurement_t measurement;
 static bool firstRead;
+static bool pzemState;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-void HalLcd_HW_Init(void);
-
-void HalLcd_HW_Control(uint8 cmd);
-
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode);
 
 static void zclApp_BtnClick(void);
@@ -111,17 +105,8 @@ static uint8 zclApp_ProcessInDefaultRspCmd(zclIncomingMsg_t *pInMsg);
 
 static void pzemRead(void);
 
-// Изменение состояние реле
-static void updateRelay(bool);
-
-// Отображение состояния реле на пинах
-static void applyRelay(void);
-
 // Выход из сети
 void zclApp_LeaveNetwork(void);
-
-// Отправка отчета о состоянии реле
-void zclApp_ReportOnOff(void);
 
 // Отправка отчета о температуре
 void zclApp_ReportData(void);
@@ -130,35 +115,35 @@ void zclApp_ReportData(void);
  * ZCL General Profile Callback table
  */
 static zclGeneral_AppCallbacks_t zclApp_CmdCallbacks = {
-        zclApp_BasicResetCB,             // Basic Cluster Reset command
-        NULL,                                   // Identify Trigger Effect command
-        zclApp_OnOffCB,                     // On/Off cluster commands
-        NULL,                                   // On/Off cluster enhanced command Off with Effect
-        NULL,                                   // On/Off cluster enhanced command On with Recall Global Scene
-        NULL,                                   // On/Off cluster enhanced command On with Timed Off
+        zclApp_BasicResetCB,      // Basic Cluster Reset command
+        NULL,                     // Identify Trigger Effect command
+        NULL,                     // On/Off cluster commands
+        NULL,                     // On/Off cluster enhanced command Off with Effect
+        NULL,                     // On/Off cluster enhanced command On with Recall Global Scene
+        NULL,                     // On/Off cluster enhanced command On with Timed Off
 #ifdef ZCL_LEVEL_CTRL
-        NULL,                                   // Level Control Move to Level command
-        NULL,                                   // Level Control Move command
-        NULL,                                   // Level Control Step command
-        NULL,                                   // Level Control Stop command
+        NULL,                     // Level Control Move to Level command
+        NULL,                     // Level Control Move command
+        NULL,                     // Level Control Step command
+        NULL,                     // Level Control Stop command
 #endif
 #ifdef ZCL_GROUPS
-        NULL,                                   // Group Response commands
+        NULL,                     // Group Response commands
 #endif
 #ifdef ZCL_SCENES
-        NULL,                                  // Scene Store Request command
-        NULL,                                  // Scene Recall Request command
-        NULL,                                  // Scene Response command
+        NULL,                     // Scene Store Request command
+        NULL,                     // Scene Recall Request command
+        NULL,                     // Scene Response command
 #endif
 #ifdef ZCL_ALARMS
-        NULL,                                  // Alarm (Response) commands
+        NULL,                     // Alarm (Response) commands
 #endif
 #ifdef SE_UK_EXT
-        NULL,                                  // Get Event Log command
-        NULL,                                  // Publish Event Log command
+        NULL,                     // Get Event Log command
+        NULL,                     // Publish Event Log command
 #endif
-        NULL,                                  // RSSI Location command
-        NULL                                   // RSSI Location Response command
+        NULL,                     // RSSI Location command
+        NULL                      // RSSI Location Response command
 };
 
 
@@ -216,14 +201,6 @@ void zclApp_Init(byte task_id) {
     measurement.frequency = 0;
     measurement.powerFactor = 0;
     firstRead = TRUE;
-
-    // инициализируем NVM для хранения RELAY STATE
-    if (SUCCESS == osal_nv_item_init(NV_APP_RELAY_STATE_ID, 1, &RELAY_STATE)) {
-        // читаем значение RELAY STATE из памяти
-        osal_nv_read(NV_APP_RELAY_STATE_ID, 0, 1, &RELAY_STATE);
-    }
-    // применяем состояние реле
-    applyRelay();
 
     // Старт процесса возвращения в сеть
     bdb_StartCommissioning(BDB_COMMISSIONING_MODE_PARENT_LOST);
@@ -618,34 +595,6 @@ static void pzemRead(void) {
     }
 }
 
-// Изменение состояния реле
-void updateRelay(bool value) {
-    LREP("updateRelay. value - %d \r\n", value);
-    if (value) {
-        RELAY_STATE = 1;
-    } else {
-        RELAY_STATE = 0;
-    }
-    // сохраняем состояние реле
-    osal_nv_write(NV_APP_RELAY_STATE_ID, 0, 1, &RELAY_STATE);
-    // Отображаем новое состояние
-    applyRelay();
-    // отправляем отчет
-    zclApp_ReportOnOff();
-}
-
-// Применение состояние реле
-void applyRelay(void) {
-    // если выключено
-    if (RELAY_STATE == 0) {
-        // то гасим светодиод 1
-        HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
-    } else {
-        // иначе включаем светодиод 1
-        HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
-    }
-}
-
 // Инициализация выхода из сети
 void zclApp_LeaveNetwork(void) {
     zclApp_ResetAttributesToDefaultValues();
@@ -665,49 +614,6 @@ void zclApp_LeaveNetwork(void) {
         // Couldn't send out leave; prepare to reset anyway
         ZDApp_LeaveReset(FALSE);
     }
-}
-
-// Обработчик команд кластера OnOff
-static void zclApp_OnOffCB(uint8 cmd) {
-    // запомним адрес откуда пришла команда
-    // чтобы отправить обратно отчет
-    afIncomingMSGPacket_t *pPtr = zcl_getRawAFMsg();
-    zclApp_DstAddr.addr.shortAddr = pPtr->srcAddr.addr.shortAddr;
-
-    if (cmd == COMMAND_ON) {            // Включить
-        updateRelay(TRUE);
-    } else if (cmd == COMMAND_OFF) {    // Выключить
-        updateRelay(FALSE);
-    } else if (cmd == COMMAND_TOGGLE) { // Переключить
-        updateRelay(RELAY_STATE == 0);
-    }
-}
-
-// Информирование о состоянии реле
-void zclApp_ReportOnOff(void) {
-    const uint8 NUM_ATTRIBUTES = 1;
-
-    zclReportCmd_t *pReportCmd;
-
-    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) +
-                                (NUM_ATTRIBUTES * sizeof(zclReport_t)));
-    if (pReportCmd != NULL) {
-        pReportCmd->numAttr = NUM_ATTRIBUTES;
-
-        pReportCmd->attrList[0].attrID = ATTRID_ON_OFF;
-        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_BOOLEAN;
-        pReportCmd->attrList[0].attrData = (void *) (&RELAY_STATE);
-
-        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
-        zclApp_DstAddr.addr.shortAddr = 0;
-        zclApp_DstAddr.endPoint = 1;
-
-        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
-                          ZCL_CLUSTER_ID_GEN_ON_OFF, pReportCmd,
-                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
-    }
-
-    osal_mem_free(pReportCmd);
 }
 
 // Информирование о температуре
@@ -790,7 +696,7 @@ static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {
 }
 
 static void zclApp_BtnClick(void) {
-    updateRelay(RELAY_STATE == 0);
+
 }
 
 static void zclApp_BtnDblClick(void) {

@@ -29,7 +29,9 @@
 
 static uint16 CRC16(uint8 *nData, uint16 wLength);
 
-void setCRC(uint8 *buf, uint16 len);
+static void setCRC(uint8 *buf, uint16 len);
+
+static bool checkCRC(uint8 *buf, uint16 len);
 
 static void Pzem_uartCB(uint8 port, uint8 event);
 
@@ -87,12 +89,28 @@ static uint16 CRC16(uint8 *nData, uint16 wLength) {
     return wCRCWord;
 }
 
-void setCRC(uint8 *buf, uint16 len) {
+static void setCRC(uint8 *buf, uint16 len) {
     uint16 crc = CRC16(buf, len - 2); // CRC of data
 
     // Write high and low byte to last two positions
     buf[len - 2] = crc & 0xFF; // Low byte first
     buf[len - 1] = (crc >> 8) & 0xFF; // High byte second
+}
+
+/**
+ * Check CRC for buf
+ * @param buf duffer with data
+ * @param len data length
+ * @return TRUE if CRC correct, otherwise FALSE
+ */
+static bool checkCRC(uint8 *buf, uint16 len) {
+    uint16 crc = CRC16(buf, len - 2); // CRC of data
+
+    // compare high and low byte to last two positions
+    if (buf[len - 2] != (crc & 0xFF)) { // Low byte first
+        return FALSE;
+    }
+    return buf[len - 1] == ((crc >> 8) & 0xFF); // High byte second
 }
 
 /**
@@ -134,12 +152,12 @@ static void Pzem_uartCB(uint8 port, uint8 event) {
             continue;
         }
 
-        if (responseCounter >= PZEM_RESPONSE_LENGTH - 1) {
+        response[responseCounter++] = byte;
+        if (responseCounter >= PZEM_RESPONSE_LENGTH) {
             responseCounter = 0;
             pzemRequestState = Ready;
             continue;
         }
-        response[responseCounter++] = byte;
 
         if (responseCounter == PZEM_ERROR_ANSWER_SIZE) {
             if (response[1] == PZEM_ERROR_ANSWER_CODE) {
@@ -182,17 +200,25 @@ bool Pzem_RequestData(uint8 pzemAddr) {
  * @return FALSE if error
  */
 bool Pzem_getData(Pzem_measurement_t *measurement) {
+    measurement->voltage = 0;
+    measurement->current = 0;
+    measurement->power = 0;
+    measurement->energy = 0;
+    measurement->frequency = 0;
+    measurement->powerFactor = 0;
+
     if (pzemRequestState != Ready) {
-        measurement->voltage = 0;
-        measurement->current = 0;
-        measurement->power = 0;
-        measurement->energy = 0;
-        measurement->frequency = 0;
-        measurement->powerFactor = 0;
         return FALSE;
     }
-
+    if (!checkCRC(response, PZEM_RESPONSE_LENGTH)) {
+        return FALSE;
+    }
     measurement->voltage = (uint16) response[4] | (uint16) response[3] << 8;
+    // checking that the data is correct
+    if (measurement->voltage < 1800 || measurement->voltage > 2500) {
+        measurement->voltage = 0;
+        return FALSE;
+    }
     measurement->current = (uint32) response[6] | (uint32) response[5] << 8 | (uint32) response[8] << 16 | (uint32) response[7] << 24;
     measurement->power = (uint32) response[10] | (uint32) response[9] << 8 | (uint32) response[12] << 16 | (uint32) response[11] << 24;
     measurement->energy = (uint32) response[14] | (uint32) response[13] << 8 | (uint32) response[16] << 16 | (uint32) response[15] << 24;

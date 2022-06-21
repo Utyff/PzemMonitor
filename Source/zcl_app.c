@@ -219,6 +219,8 @@ void zclApp_Init(byte task_id) {
     osal_start_reload_timer(zclApp_TaskID, APP_PZEM_READ_EVT, 1000);
     // report measured data every 1 min
     osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, ((uint32) 60 * 1000));
+    // report time every 1 min
+    osal_start_reload_timer(zclApp_TaskID, APP_REPORT_CLOCK_EVT, (uint32) 60000);
 
     zclApp_SetTimeDate();
 }
@@ -330,20 +332,20 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     }
 
     if (events & APP_REPORT_CLOCK_EVT) {
-        LREPMaster("APP_REPORT_CLOCK_EVT\r\n");
+        LREP("REPORTCLOCK %ld %ld\r\n", zclApp_GenTime_TimeUTC, zclApp_GenTime_old);
 
-        //Fix osalclock bug 88 min in 15 days
+        // Fix osalclock bug 88 min in 15 days
         osalTimeUpdate();
         zclApp_GenTime_TimeUTC = osal_getClock();
 
-        //if the interval is more than 70 seconds, then adjust the time
+        // if the interval is more than 70 seconds, then adjust the time
         if ((zclApp_GenTime_TimeUTC - zclApp_GenTime_old) > 70) {
-            zclApp_LocalTime(); // report
+//            zclApp_LocalTime(); // report
             // Update OSAL time
             osal_setClock(zclApp_GenTime_old + 60);
             osalTimeUpdate();
             zclApp_GenTime_TimeUTC = osal_getClock();
-            zclApp_LocalTime(); // report
+//            zclApp_LocalTime(); // report
         }
         zclApp_GenTime_old = zclApp_GenTime_TimeUTC;
 
@@ -371,7 +373,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 void zclApp_SetTimeDate(void) {
     // Set Time and Date
     UTCTimeStruct time;
-    time.seconds = 00;
+    time.seconds = 0;
     time.minutes = (zclApp_DateCode[15] - 48) * 10 + (zclApp_DateCode[16] - 48);
     time.hour = (zclApp_DateCode[12] - 48) * 10 + (zclApp_DateCode[13] - 48);
     time.day = (zclApp_DateCode[1] - 48) * 10 + (zclApp_DateCode[2] - 48) - 1;
@@ -402,7 +404,7 @@ static void zclApp_LocalTime(void) {
 //    bdb_RepChangedAttrValue(zclApp_FirstEP.EndPoint, GEN_TIME, ATTRID_TIME_LOCAL_TIME);
 }
 
-
+// print to screen
 void EpdtestRefresh(void) {
     // clock init Firmware build date 20/08/2021 13:47
     // Update RTC and get new clock values
@@ -424,20 +426,20 @@ void EpdtestRefresh(void) {
   time_string_1[0] = time.minutes / 10 % 10 + '0';
   time_string_1[1] = time.minutes % 10 + '0';
 */
-    // covert UTCTimeStruct date and month to display
+/*    // convert UTCTimeStruct date and month to display
     time.day = time.day + 1;
     time.month = time.month + 1;
     char date_string[] = {'0', '0', '.', '0', '0', '.', '0', '0', '\0'};
-    date_string[0] = time.day /10 % 10  + '0';
+    date_string[0] = time.day / 10 % 10 + '0';
     date_string[1] = time.day % 10 + '0';
     date_string[3] = time.month / 10 % 10 + '0';
     date_string[4] = time.month % 10 + '0';
     date_string[6] = time.year / 10 % 10 + '0';
     date_string[7] = time.year % 10 + '0';
 
-    uint8 day_week = (uint8)floor((float)(zclApp_GenTime_TimeUTC/86400)) % 7;
+    uint8 day_week = (uint8) floor((float) (zclApp_GenTime_TimeUTC / 86400)) % 7;
 
-    char* day_string = "";
+    char *day_string = "";
     if (day_week == 0) {
         day_string = "Thursday";
     } else if (day_week == 1) {
@@ -452,7 +454,7 @@ void EpdtestRefresh(void) {
         day_string = "Tuesday";
     } else if (day_week == 6) {
         day_string = "Wednesday";
-    }
+    } */
 }
 
 /*********************************************************************
@@ -752,7 +754,7 @@ void zclApp_LeaveNetwork(void) {
 
 // Информирование о температуре
 void zclApp_ReportData(void) {
-    const uint8 NUM_ATTRIBUTES = 6;
+    const uint8 NUM_ATTRIBUTES = 7;
 
     zclReportCmd_t *pReportCmd;
 
@@ -793,6 +795,11 @@ void zclApp_ReportData(void) {
         pReportCmd->attrList[5].attrID = ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR;
         pReportCmd->attrList[5].dataType = ZCL_DATATYPE_UINT16;
         pReportCmd->attrList[5].attrData = (void *) (&measurement.powerFactor);
+
+        // powerFactor
+        pReportCmd->attrList[6].attrID = ATTRID_TIME_LOCAL_TIME;
+        pReportCmd->attrList[6].dataType = ZCL_DATATYPE_UINT32;
+        pReportCmd->attrList[6].attrData = (void *) (&zclApp_GenTime_TimeUTC);
 
         zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
                           ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, pReportCmd,

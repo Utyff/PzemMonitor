@@ -1,4 +1,3 @@
-#include "math.h"
 #include "ZComDef.h"
 #include "OSAL.h"
 #include "OSAL_Clock.h"
@@ -107,11 +106,7 @@ static uint8 zclApp_ProcessInWriteRspCmd(zclIncomingMsg_t *pInMsg);
 
 static uint8 zclApp_ProcessInDefaultRspCmd(zclIncomingMsg_t *pInMsg);
 
-static void zclApp_LocalTime(void);
-
 static void zclApp_SetTimeDate(void);
-
-void EpdtestRefresh(void);
 
 static void pzemRead(void);
 
@@ -340,29 +335,13 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
         // if the interval is more than 70 seconds, then adjust the time
         if ((zclApp_GenTime_TimeUTC - zclApp_GenTime_old) > 70) {
-//            zclApp_LocalTime(); // report
             // Update OSAL time
             osal_setClock(zclApp_GenTime_old + 60);
             osalTimeUpdate();
             zclApp_GenTime_TimeUTC = osal_getClock();
-//            zclApp_LocalTime(); // report
         }
         zclApp_GenTime_old = zclApp_GenTime_TimeUTC;
 
-/*        if (zclApp_Occupied == 1 || bdbAttributes.bdbNodeIsOnANetwork == 0) {
-//        osalTimeUpdate();
-//        zclApp_GenTime_TimeUTC = osal_getClock();
-#ifdef LQI_REQ
-            zclApp_RequestLqi();
-#endif
-            fullupdate_hour = fullupdate_hour + 1;
-            if (fullupdate_hour == 30) { // over 30 min clear
-                zclApp_EpdUpdateClock();
-                fullupdate_hour = 0;
-            }
-//        zclApp_LocalTime(); //report local time
-            EpdRefresh();
-        } */
         return (events ^ APP_REPORT_CLOCK_EVT);
     }
 
@@ -399,63 +378,6 @@ static void zclApp_SaveAttributesToNV(void) {
     osal_setClock(zclApp_GenTime_TimeUTC);
 }
 
-
-static void zclApp_LocalTime(void) {
-//    bdb_RepChangedAttrValue(zclApp_FirstEP.EndPoint, GEN_TIME, ATTRID_TIME_LOCAL_TIME);
-}
-
-// print to screen
-void EpdtestRefresh(void) {
-    // clock init Firmware build date 20/08/2021 13:47
-    // Update RTC and get new clock values
-    osalTimeUpdate();
-    UTCTimeStruct time;
-    osal_ConvertUTCTime(&time, osal_getClock());
-
-    char time_string[] = {'0', '0', ':', '0', '0', '\0'};
-    time_string[0] = time.hour / 10 % 10 + '0';
-    time_string[1] = time.hour % 10 + '0';
-    time_string[3] = time.minutes / 10 % 10 + '0';
-    time_string[4] = time.minutes % 10 + '0';
-/*
-  char time_string[] = {'0', '0', ':', '\0'};
-  time_string[0] = time.hour / 10 % 10 + '0';
-  time_string[1] = time.hour % 10 + '0';
-
-  char time_string_1[] = {'0', '0', '\0'};
-  time_string_1[0] = time.minutes / 10 % 10 + '0';
-  time_string_1[1] = time.minutes % 10 + '0';
-*/
-/*    // convert UTCTimeStruct date and month to display
-    time.day = time.day + 1;
-    time.month = time.month + 1;
-    char date_string[] = {'0', '0', '.', '0', '0', '.', '0', '0', '\0'};
-    date_string[0] = time.day / 10 % 10 + '0';
-    date_string[1] = time.day % 10 + '0';
-    date_string[3] = time.month / 10 % 10 + '0';
-    date_string[4] = time.month % 10 + '0';
-    date_string[6] = time.year / 10 % 10 + '0';
-    date_string[7] = time.year % 10 + '0';
-
-    uint8 day_week = (uint8) floor((float) (zclApp_GenTime_TimeUTC / 86400)) % 7;
-
-    char *day_string = "";
-    if (day_week == 0) {
-        day_string = "Thursday";
-    } else if (day_week == 1) {
-        day_string = " Friday ";
-    } else if (day_week == 2) {
-        day_string = "Saturday";
-    } else if (day_week == 3) {
-        day_string = " Sunday";
-    } else if (day_week == 4) {
-        day_string = " Monday";
-    } else if (day_week == 5) {
-        day_string = "Tuesday";
-    } else if (day_week == 6) {
-        day_string = "Wednesday";
-    } */
-}
 
 /*********************************************************************
  * @fn      zclApp_ProcessCommissioningStatus

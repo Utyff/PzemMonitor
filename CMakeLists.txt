@@ -66,8 +66,8 @@ add_executable(PzemMonitor
         Source/zcl_app_data.c
         Source/OSAL_App.c
         Source/pzem.c
-        Source/sh1106.c
-        Source/sh1106.h
+        Source/st7789.c
+        Source/st7789.h
         zstack-lib/battery.h
         zstack-lib/bettery.c
         zstack-lib/commissioning.c

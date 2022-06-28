@@ -20,7 +20,7 @@
 #include "hal_key.h"
 #include "hal_drivers.h"
 
-#include "sh1106.h"
+#include "st7789.h"
 #include "Debug.h"
 
 #include "version.h"
@@ -167,7 +167,7 @@ void zclApp_Init(byte task_id) {
     Pzem_initUart();
 #endif
 #ifndef DEBUG_PZEM_UART
-    SH1106_Init();
+    LCD_Init();
 #endif
 
     zclApp_TaskID = task_id;
@@ -609,17 +609,17 @@ static void pzemRead(void) {
 #ifndef DEBUG_PZEM_UART
         char str[22];
         sprintf(str, "v %6d", m.voltage);
-        SH1106_Print(2, 1, str);
+        LCD_Print(2, 1, str);
         sprintf(str, "c %8ld", m.current);
-        SH1106_Print(2, 2, str);
+        LCD_Print(2, 2, str);
         sprintf(str, "p %8ld", m.power);
-        SH1106_Print(2, 3, str);
+        LCD_Print(2, 3, str);
         sprintf(str, "e %8ld", m.energy);
-        SH1106_Print(2, 4, str);
+        LCD_Print(2, 4, str);
         sprintf(str, "f %8d", m.frequency);
-        SH1106_Print(2, 5, str);
+        LCD_Print(2, 5, str);
         sprintf(str, "pf %7d", m.powerFactor);
-        SH1106_Print(2, 6, str);
+        LCD_Print(2, 6, str);
 #endif
         measurement.energy = m.energy;
         if (firstRead) {
@@ -643,12 +643,12 @@ static void pzemRead(void) {
         LREPMaster("PZEM read error\r\n");
 #ifndef DEBUG_PZEM_UART
         const char *str = "          ";
-        SH1106_Print(2, 1, str);
-        SH1106_Print(2, 2, "PZEM Error");
-        SH1106_Print(2, 3, str);
-        SH1106_Print(2, 4, str);
-        SH1106_Print(2, 5, str);
-        SH1106_Print(2, 6, str);
+        LCD_Print(2, 1, str);
+        LCD_Print(2, 2, "PZEM Error");
+        LCD_Print(2, 3, str);
+        LCD_Print(2, 4, str);
+        LCD_Print(2, 5, str);
+        LCD_Print(2, 6, str);
 #endif
     }
 }

@@ -2,7 +2,7 @@
 #include "OnBoard.h"
 #include "hal_assert.h"
 #include "hal_types.h"
-#include "sh1106.h"
+#include "st7789.h"
 
 /**
   LCD pins
@@ -19,8 +19,34 @@
   P1.7 - MISO - not used
 */
 
-#define SCREEN_WIDTH  128
-#define SCREEN_HEIGHT 64
+#define SCREEN_WIDTH  240
+#define SCREEN_HEIGHT 280
+
+#define X_SHIFT 0
+#define Y_SHIFT 20
+
+#define ST7789_COLMOD  0x3A
+#define ST7789_COLOR_MODE_16bit 0x55    //  RGB565 (16bit)
+#define ST7789_ROTATION 2               //  use Normally on 240x240
+#define ST7789_INVON   0x21
+#define ST7789_SLPOUT  0x11
+#define ST7789_NORON   0x13
+#define ST7789_DISPOFF 0x28
+#define ST7789_DISPON  0x29
+#define ST7789_CASET   0x2A
+#define ST7789_RASET   0x2B
+#define ST7789_RAMWR   0x2C
+#define ST7789_MADCTL  0x36
+/* Page Address Order ('0': Top to Bottom, '1': the opposite) */
+#define ST7789_MADCTL_MY  0x80
+/* Column Address Order ('0': Left to Right, '1': the opposite) */
+#define ST7789_MADCTL_MX  0x40
+/* Page/Column Order ('0' = Normal Mode, '1' = Reverse Mode) */
+#define ST7789_MADCTL_MV  0x20
+/* Line Address Order ('0' = LCD Refresh Top to Bottom, '1' = the opposite) */
+#define ST7789_MADCTL_ML  0x10
+/* RGB/BGR Order ('0' = RGB, '1' = BGR) */
+#define ST7789_MADCTL_RGB 0x00
 
 // LCD Control lines
 #define LCD_RESET_PORT 1
@@ -52,22 +78,22 @@
 #define CONFIG_IO_PERIPHERAL_PREP(port, pin) st( P##port##SEL |= BV(pin); )
 
 // SPI interface control
-#define LCD_SPI_BEGIN()     IO_SET(LCD_CS_PORT,  LCD_CS_PIN,  0); // activate chip select
-#define LCD_SPI_END() {                                               \
-  asm("NOP");                                                         \
-  asm("NOP");                                                         \
-  asm("NOP");                                                         \
-  asm("NOP");                                                         \
-  IO_SET(LCD_CS_PORT,  LCD_CS_PIN,  1); /* deactivate chip select */  \
+#define LCD_CS_ACTIVE()     IO_SET(LCD_CS_PORT, LCD_CS_PIN, 0); // activate chip select
+#define LCD_CS_DEACTIVE() {                                         \
+  asm("NOP");                                                       \
+  asm("NOP");                                                       \
+  asm("NOP");                                                       \
+  asm("NOP");                                                       \
+  IO_SET(LCD_CS_PORT, LCD_CS_PIN, 1); /* deactivate chip select */  \
 }
 
 // macros for transmit byte
 // clear the received and transmit byte status, write tx data to buffer, wait till transmit done
-#define LCD_SPI_TX(x)          { U1CSR &= ~(BV(2) | BV(1)); U1DBUF = x; while(!(U1CSR & BV(1))); }
+#define SPI_TX(byte)          { U1CSR &= ~(BV(2) | BV(1)); U1DBUF = byte; while(!(U1CSR & BV(1))); }
 
 // macros for DC pin control
-#define LCD_DO_WRITE()        IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  1);
-#define LCD_DO_CONTROL()      IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  0);
+#define LCD_DATA_MODE()       IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  1);
+#define LCD_CONTROL_MODE()    IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  0);
 
 #define LCD_ACTIVATE_RESET()  IO_SET(LCD_RESET_PORT, LCD_RESET_PIN, 0);
 #define LCD_RELEASE_RESET()   IO_SET(LCD_RESET_PORT, LCD_RESET_PIN, 1);
@@ -76,16 +102,20 @@ extern const uint8 SmallFont[];
 
 static void SPI_Config(void);
 
-static void SH1106_WC(uint8 cmd);
+static void SPI_WriteCommand(uint8 cmd);
 
-static void SH1106_FillScreen(void);
+static void SPI_WriteData8(uint8 d8);
 
-void SH1106_Print(uint8 x, uint8 y, const char *str);
+static void SPI_WriteData(const uint8 *data, uint8 len);
+
+static void ST7789_SetAddressWindow(uint16 x0, uint16 y0, uint16 x1, uint16 y1);
+
+static void ST7789_FillScreen(uint16 color);
 
 /**
  *  Configure IO lines needed for LCD control.
  */
-static void SH1106_ConfigIO(void) {
+static void ST7789_ConfigIO(void) {
     // GPIO configuration
     CONFIG_IO_OUTPUT(LCD_MODE_PORT, LCD_MODE_PIN, 1);
     CONFIG_IO_OUTPUT(LCD_RESET_PORT, LCD_RESET_PIN, 1);
@@ -124,76 +154,183 @@ static void SPI_Config(void) {
 /**
  * Send 1 byte command
  */
-static void SH1106_WC(uint8 cmd) {
-    LCD_SPI_BEGIN()
-    LCD_DO_CONTROL()
-    LCD_SPI_TX(cmd)
-    LCD_SPI_END()
+static void SPI_WriteCommand(uint8 cmd) {
+    LCD_CS_ACTIVE()
+    LCD_CONTROL_MODE()
+    SPI_TX(cmd)
+    LCD_CS_DEACTIVE()
 }
 
 /**
- * Initialize SH1106 screen and SPI
+ * Send 1 byte data
  */
-void SH1106_Init() {
-    const uint8 contrast = 40; // 0-255
-    const uint8 bright = 0x22;
-    const uint8 mirror = 0;    // 0 or 1
+static void SPI_WriteData8(uint8 d8) {
+    LCD_CS_ACTIVE()
+    LCD_DATA_MODE()
+    SPI_TX(d8)
+    LCD_CS_DEACTIVE()
+}
 
+/**
+ * Send 2 bytes data
+ */
+static void SPI_WriteData16(uint16 d16) {
+    LCD_CS_ACTIVE()
+    LCD_DATA_MODE()
+    uint8 low = d16 & 0xff;
+    uint8 hi = d16 >> 8;
+    SPI_TX(hi)    // hi-byte first
+    SPI_TX(low)
+    LCD_CS_DEACTIVE()
+}
+
+/**
+ * Send array as data
+ */
+static void SPI_WriteData(const uint8 *data, uint8 len) {
+    LCD_CS_ACTIVE()
+    LCD_DATA_MODE()
+    for (uint8 i = 0; i < len; i++) {
+        SPI_TX(*data++)
+    }
+    LCD_CS_DEACTIVE()
+}
+
+/**
+ * Initialize ST7789 screen and SPI
+ */
+void LCD_Init() {
     // Initialize LCD IO lines
-    SH1106_ConfigIO();
+    ST7789_ConfigIO();
 
     // Initialize SPI
     SPI_Config();
 
     // Perform reset
     LCD_ACTIVATE_RESET()
-    HW_DelayUs(15000); // 15 ms
+    HW_DelayUs(15000);  // 15 ms
     LCD_RELEASE_RESET()
-    HW_DelayUs(15);    // 15 us
+    HW_DelayUs(10000);  // 10 ms
 
-    // Init SH1106
-    SH1106_WC(0xAE); // display off
-    SH1106_WC(0xA8); // set multiplex ratio(1 to 64)
-    SH1106_WC(0x3F);
-    SH1106_WC(0x81); // set contrast control register
-    SH1106_WC(contrast);
-    if (mirror) {
-        SH1106_WC(0xA0);
-        SH1106_WC(0xC0);
-    } else {
-        SH1106_WC(0xA1);
-        SH1106_WC(0xC8);
+    // Init ST7789
+
+    SPI_WriteCommand(ST7789_COLMOD);        // Set color mode
+    SPI_WriteData8(ST7789_COLOR_MODE_16bit);
+    SPI_WriteCommand(0xB2);               // Porch control
+    {
+        const uint8 data[] = {0x0C, 0x0C, 0x00, 0x33, 0x33};
+        SPI_WriteData(data, sizeof(data));
     }
-    SH1106_WC(0xDA); // Common Pads Hardware Configuration (Alternative Mode Set)
-    SH1106_WC(0x12);
-    SH1106_WC(0xD3); // Set Display Offset
-    SH1106_WC(0x00);
-    SH1106_WC(0x40); // Set Display Start Line 0
-    SH1106_WC(0xD9); // set pre-charge period
-    SH1106_WC(bright);
-    SH1106_WC(0xAF); // turn on SSD1306 panel
 
-    SH1106_FillScreen();
-    SH1106_Print(2, 0, "PZEM Monitor v1.0");
+//    ST7789_SetRotation(ST7789_ROTATION);    // MADCTL (Display Rotation)
+    SPI_WriteCommand(ST7789_MADCTL);    // MADCTL
+//    case 0:
+//        SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_RGB);
+//    case 1:
+//        SPI_WriteData8(ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
+//    case 2:
+    SPI_WriteData8(ST7789_MADCTL_RGB);
+//    case 3:
+//        SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
+
+    // Internal LCD Voltage generator settings
+    SPI_WriteCommand(0XB7);          // Gate Control
+    SPI_WriteData8(0x35);            // Default value
+    SPI_WriteCommand(0xBB);          // VCOM setting
+    SPI_WriteData8(0x19);            //	0.725v (default 0.75v for 0x20)
+    SPI_WriteCommand(0xC0);          // LCMCTRL
+    SPI_WriteData8(0x2C);            //	Default value
+    SPI_WriteCommand(0xC2);          // VDV and VRH command Enable
+    SPI_WriteData8(0x01);            //	Default value
+    SPI_WriteCommand(0xC3);          // VRH set
+    SPI_WriteData8(0x12);            //	+-4.45v (defalut +-4.1v for 0x0B)
+    SPI_WriteCommand(0xC4);          // VDV set
+    SPI_WriteData8(0x20);            //	Default value
+    SPI_WriteCommand(0xC6);          // Frame rate control in normal mode
+    SPI_WriteData8(0x0F);            // Default value (60HZ)
+    SPI_WriteCommand(0xD0);          // Power control
+    SPI_WriteData8(0xA4);            //	Default value
+    SPI_WriteData8(0xA1);            //	Default value
+
+    SPI_WriteCommand(0xE0);
+    {
+        const uint8 data[] = {0xD0, 0x04, 0x0D, 0x11, 0x13, 0x2B, 0x3F, 0x54, 0x4C, 0x18, 0x0D, 0x0B, 0x1F, 0x23};
+        SPI_WriteData(data, sizeof(data));
+    }
+
+    SPI_WriteCommand(0xE1);
+    {
+        const uint8 data[] = {0xD0, 0x04, 0x0C, 0x11, 0x13, 0x2C, 0x3F, 0x44, 0x51, 0x2F, 0x1F, 0x1F, 0x20, 0x23};
+        SPI_WriteData(data, sizeof(data));
+    }
+    SPI_WriteCommand(ST7789_INVON);     // Inversion ON
+    SPI_WriteCommand(ST7789_SLPOUT);    // Out of sleep mode
+    SPI_WriteCommand(ST7789_NORON);     // Normal Display on
+    SPI_WriteCommand(ST7789_DISPON);    // Main screen turned on
+
+    HW_DelayUs(50000);
+    ST7789_FillScreen(BLUE);           // Fill with Black.
+
+    LCD_Print(2, 0, "PZEM Monitor v1.0");
 }
 
 /**
  * Fill screen black
  */
-static void SH1106_FillScreen(void) {
-    uint8 i, j;
-    for (i = 0; i < 8; i++) {
-        SH1106_WC(0xB0 + i);
-        SH1106_WC(2);
-        SH1106_WC(0x10);
+static void ST7789_FillScreen(uint16 color) {
+    uint16 i;
+    ST7789_SetAddressWindow(0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
+    LCD_CS_ACTIVE()
+    LCD_DATA_MODE()
 
-        LCD_SPI_BEGIN()
-        LCD_DO_WRITE()
-        for (j = 0; j < SCREEN_WIDTH; j++) {
-            LCD_SPI_TX(0)
+    uint16 j;
+    uint16 ii = 0;
+    for (i = 0; i < SCREEN_HEIGHT; i++) {
+        ii++;
+        switch ((ii >> 3) % 3) {
+            case 0:
+                color = BLUE;
+                break;
+            case 1:
+                color = GREEN;
+                break;
+            case 2:
+                color = RED;
+                break;
         }
-        LCD_SPI_END()
+        uint8 low = color & 0xff;
+        uint8 hi = color >> 8;
+        for (j = 0; j < SCREEN_WIDTH; j++) {
+            SPI_TX(hi)    // hi-byte first
+            SPI_TX(low)
+        }
     }
+    LCD_CS_DEACTIVE()
+}
+
+/**
+ * @brief Set address of DisplayWindow
+ * @param xi and yi -> coordinates of window
+ * @return none
+ */
+static void ST7789_SetAddressWindow(uint16 x0, uint16 y0, uint16 x1, uint16 y1) {
+    uint16 x_start = x0 + X_SHIFT;
+    uint16 x_end = x1 + X_SHIFT;
+    uint16 y_start = y0 + Y_SHIFT;
+    uint16 y_end = y1 + Y_SHIFT;
+
+    // Column Address set
+    SPI_WriteCommand(ST7789_CASET);
+    SPI_WriteData16(x_start);
+    SPI_WriteData16(x_end);
+
+    // Row Address set
+    SPI_WriteCommand(ST7789_RASET);
+    SPI_WriteData16(y_start);
+    SPI_WriteData16(y_end);
+
+    // Write to RAM
+    SPI_WriteCommand(ST7789_RAMWR);
 }
 
 /**
@@ -202,61 +339,14 @@ static void SH1106_FillScreen(void) {
  * @param y row of first char
  * @param str string for print. 0x00 at the string end
  */
-void SH1106_Print(uint8 x, uint8 y, const char *str) {
+void LCD_Print(uint8 x, uint8 y, const char *str) {
     const uint8 fontWidth = 6;
-    uint8 code;
-    uint8 start;
-    uint16 dFont;
 
-    // select page: 0-7
-    SH1106_WC(0xB0 + y);
-    // set first pixel(row) in the page: 2-130
-    start = x * fontWidth + 2;
-    SH1106_WC(0x0f & start);
-    SH1106_WC(0x0f & (start >> 4) | 0x10);
+    LCD_CS_ACTIVE()
+    LCD_DATA_MODE()
 
-    LCD_SPI_BEGIN()
-    LCD_DO_WRITE()
-
-    while (1) {
-        code = *str++;
-        if (code < 32) {
-            break;
-        }
-        dFont = fontWidth * (code - 32);
-        for (uint8 j = 0; j < fontWidth; j++) {
-            LCD_SPI_TX(SmallFont[dFont++])
-        }
-    }
-
-    LCD_SPI_END()
+    LCD_CS_DEACTIVE()
 }
-
-/**
- * Erase chars.
- * @param x - column of first char
- * @param y - row of first char
- * @param count - number of characters to be erased
- */
-void SH1106_Erase(uint8 x, uint8 y, uint8 count) {
-    const uint8 fontWidth = 6;
-    uint8 start;
-
-    // select page: 0-7
-    SH1106_WC(0xB0 + y);
-    // set first pixel(row) in the page: 2-130
-    start = x * fontWidth + 2;
-    SH1106_WC(0x0f & start);
-    SH1106_WC(0x0f & (start >> 4) | 0x10);
-
-    LCD_SPI_BEGIN()
-    LCD_DO_WRITE()
-    for (uint8 j = 0; j < count * fontWidth; j++) {
-        LCD_SPI_TX(0)
-    }
-    LCD_SPI_END()
-}
-
 
 /**
  * Wait for x us. @ 32MHz MCU clock it takes 32 "nop"s for 1 us delay.

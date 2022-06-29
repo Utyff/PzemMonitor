@@ -2,8 +2,8 @@
 #define PZEMMONITOR_ST7789_H
 
 /**
- *Color of pen
- *If you want to use another color, you can choose one in RGB565 format.
+ * Color of pen
+ * If you want to use another color, you can choose one in RGB565 format.
  */
 
 #define WHITE       0xFFFF
@@ -31,7 +31,7 @@
 
 void LCD_Init(void);
 
-void LCD_Print(uint8 x, uint8 y, const char *str);
+void LCD_Print(uint16 x, uint16 y, const char *str, uint16 color, uint16 bgcolor);
 
 void HW_DelayUs(uint16 microSecs);
 

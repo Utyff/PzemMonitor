@@ -1,3 +1,4 @@
+#include "stdio.h"
 #include "OSAL.h"
 #include "OnBoard.h"
 #include "hal_assert.h"
@@ -37,32 +38,32 @@
 #define ST7789_RASET   0x2B
 #define ST7789_RAMWR   0x2C
 #define ST7789_MADCTL  0x36
-/* Page Address Order ('0': Top to Bottom, '1': the opposite) */
+// Page Address Order ('0': Top to Bottom, '1': the opposite)
 #define ST7789_MADCTL_MY  0x80
-/* Column Address Order ('0': Left to Right, '1': the opposite) */
+// Column Address Order ('0': Left to Right, '1': the opposite)
 #define ST7789_MADCTL_MX  0x40
-/* Page/Column Order ('0' = Normal Mode, '1' = Reverse Mode) */
+// Page/Column Order ('0' = Normal Mode, '1' = Reverse Mode)
 #define ST7789_MADCTL_MV  0x20
-/* Line Address Order ('0' = LCD Refresh Top to Bottom, '1' = the opposite) */
+// Line Address Order ('0' = LCD Refresh Top to Bottom, '1' = the opposite)
 #define ST7789_MADCTL_ML  0x10
-/* RGB/BGR Order ('0' = RGB, '1' = BGR) */
+// RGB/BGR Order ('0' = RGB, '1' = BGR)
 #define ST7789_MADCTL_RGB 0x00
 
 // LCD Control lines
 #define LCD_RESET_PORT 1
 #define LCD_RESET_PIN  1
-#define LCD_CS_PORT 1
-#define LCD_CS_PIN  2
-#define LCD_MODE_PORT 1
-#define LCD_MODE_PIN  3
+#define LCD_CS_PORT    1
+#define LCD_CS_PIN     2
+#define LCD_MODE_PORT  1
+#define LCD_MODE_PIN   3
 
 // LCD SPI lines
-#define LCD_CLK_PORT 1
-#define LCD_CLK_PIN  5
-#define LCD_MOSI_PORT 1
-#define LCD_MOSI_PIN  6
-#define LCD_MISO_PORT 1
-#define LCD_MISO_PIN  7
+#define LCD_CLK_PORT   1
+#define LCD_CLK_PIN    5
+#define LCD_MOSI_PORT  1
+#define LCD_MOSI_PIN   6
+#define LCD_MISO_PORT  1
+#define LCD_MISO_PIN   7
 
 // Defines for HW LCD
 
@@ -79,17 +80,14 @@
 
 // SPI interface control
 #define LCD_CS_ACTIVE()     IO_SET(LCD_CS_PORT, LCD_CS_PIN, 0); // activate chip select
-#define LCD_CS_DEACTIVE() {                                         \
-  asm("NOP");                                                       \
-  asm("NOP");                                                       \
-  asm("NOP");                                                       \
-  asm("NOP");                                                       \
-  IO_SET(LCD_CS_PORT, LCD_CS_PIN, 1); /* deactivate chip select */  \
+#define LCD_CS_DEACTIVE() {                                                         \
+  while(U1CSR & BV(0));               /* wait for the last operation to complete */ \
+  IO_SET(LCD_CS_PORT, LCD_CS_PIN, 1); /* deactivate chip select */                  \
 }
 
 // macros for transmit byte
 // clear the received and transmit byte status, write tx data to buffer, wait till transmit done
-#define SPI_TX(byte)          { U1CSR &= ~(BV(2) | BV(1)); U1DBUF = byte; while(!(U1CSR & BV(1))); }
+#define SPI_TX(byte)          { while(U1CSR & BV(0)); U1CSR &= ~(BV(2) | BV(1)); U1DBUF = byte; }
 
 // macros for DC pin control
 #define LCD_DATA_MODE()       IO_SET(LCD_MODE_PORT,  LCD_MODE_PIN,  1);
@@ -210,11 +208,11 @@ void LCD_Init() {
     // Initialize SPI
     SPI_Config();
 
-    // Perform reset
+    // reset screen
     LCD_ACTIVATE_RESET()
-    HW_DelayUs(15000);  // 15 ms
+    HW_DelayUs(1000);
     LCD_RELEASE_RESET()
-    HW_DelayUs(10000);  // 10 ms
+    HW_DelayUs(1000);
 
     // Init ST7789
 
@@ -226,16 +224,12 @@ void LCD_Init() {
         SPI_WriteData(data, sizeof(data));
     }
 
-//    ST7789_SetRotation(ST7789_ROTATION);    // MADCTL (Display Rotation)
-    SPI_WriteCommand(ST7789_MADCTL);    // MADCTL
-//    case 0:
-//        SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_RGB);
-//    case 1:
-//        SPI_WriteData8(ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
-//    case 2:
+    // Set rotation
+    SPI_WriteCommand(ST7789_MADCTL);    // MADCTL - Display Rotation
+//    SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_RGB);
+//    SPI_WriteData8(ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
     SPI_WriteData8(ST7789_MADCTL_RGB);
-//    case 3:
-//        SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
+//    SPI_WriteData8(ST7789_MADCTL_MX | ST7789_MADCTL_MV | ST7789_MADCTL_RGB);
 
     // Internal LCD Voltage generator settings
     SPI_WriteCommand(0XB7);          // Gate Control
@@ -272,7 +266,7 @@ void LCD_Init() {
     SPI_WriteCommand(ST7789_NORON);     // Normal Display on
     SPI_WriteCommand(ST7789_DISPON);    // Main screen turned on
 
-    HW_DelayUs(50000);
+    HW_DelayUs(1000);
     LCD_FillScreen(BLUE);               // Clean screen.
 
     LCD_Print(25, 5, "PZEM Monitor v1.0", YELLOW, BLUE);
@@ -338,24 +332,30 @@ void LCD_WriteChar(uint16 x, uint16 y, char ch, uint16 color, uint16 bgcolor) {
     uint16 b;
     LCD_SetAddressWindow(x, y, x + FONT_WIDTH - 1, y + FONT_HEIGHT - 1);
 
+    uint16 charNum = (ch - 32) * FONT_HEIGHT;
+    uint16 colorHi = color >> 8;
+    uint16 colorLow = color & 0xFF;
+    uint16 bgcolorHi = bgcolor >> 8;
+    uint16 bgcolorLow = bgcolor & 0xFF;
     LCD_CS_ACTIVE()
     LCD_DATA_MODE()
     for (i = 0; i < FONT_HEIGHT; i++) {
-        b = Font11x18[(ch - 32) * FONT_HEIGHT + i];
+        b = Font11x18[charNum + i];
         for (j = 0; j < FONT_WIDTH; j++) {
-            if ((b << j) & 0x8000) {
-                SPI_TX(color >> 8)    // hi-byte first
-                SPI_TX(color & 0xFF)
+            if (b & 0x8000) {
+                SPI_TX(colorHi)    // hi-byte first
+                SPI_TX(colorLow)
             } else {
-                SPI_TX(bgcolor >> 8)    // hi-byte first
-                SPI_TX(bgcolor & 0xFF)
+                SPI_TX(bgcolorHi)    // hi-byte first
+                SPI_TX(bgcolorLow)
             }
+            b = b << 1;
         }
     }
     LCD_CS_DEACTIVE()
 }
 
-/** 
+/**
  * @brief Write a string 
  * @param  x&y -> cursor of the start point.
  * @param str -> string to write
@@ -399,7 +399,7 @@ void HW_DelayUs(uint16 microSecs) {
     }
 }
 
-const uint16 Font11x18 [] = {
+const uint16 Font11x18[] = {
         0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   // sp
         0x0000, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0C00, 0x0000, 0x0C00, 0x0C00, 0x0000, 0x0000, 0x0000,   // !
         0x0000, 0x1B00, 0x1B00, 0x1B00, 0x1B00, 0x1B00, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,   // "

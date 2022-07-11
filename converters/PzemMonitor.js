@@ -56,7 +56,12 @@ const device = {
     supports: 'time',
     icon: 'https://raw.githubusercontent.com/Utyff/PzemMonitor/image/images/PZEM-004-module.jpg',
     fromZigbee: [fromZigbeeConverters.electrical_measurement, fz.local_time],
-    toZigbee: [tz.local_time],
+    toZigbee: [toZigbeeConverters.acvoltage,
+        toZigbeeConverters.accurrent,
+        toZigbeeConverters.electrical_measurement_power,
+        toZigbeeConverters.frequency,
+        toZigbeeConverters.powerfactor,
+        tz.local_time],
     configure: async (device, coordinatorEndpoint, logger) => {
         const endpoint = device.getEndpoint(1);
         await bind(endpoint, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
@@ -78,9 +83,12 @@ const device = {
         // Time-master + synchronised
         firstEndpoint.write('genTime', {time: time});
     },
-    exposes: [e.power(),
-        e.voltage(),
+    exposes: [e.voltage(),
         e.current(),
+        e.power(),
+        e.energy(),
+        e.ac_frequency(),
+        e.power_factor(),
         exposes.enum('local_time', ACCESS_STATE | ACCESS_WRITE, ['set']).withDescription('Set date and time'),
     ],
 };

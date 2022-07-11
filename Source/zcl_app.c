@@ -611,15 +611,15 @@ static void pzemRead(void) {
         sprintf(str, "v %6d", m.voltage);
         LCD_Print(40, 55, str, CYAN, BLUE);
         sprintf(str, "c %8ld", m.current);
-        LCD_Print(40, 75, str, CYAN, BLUE);
+        LCD_Print(40, 85, str, CYAN, BLUE);
         sprintf(str, "p %8ld", m.power);
-        LCD_Print(40, 95, str, CYAN, BLUE);
-        sprintf(str, "e %8ld", m.energy);
         LCD_Print(40, 115, str, CYAN, BLUE);
+        sprintf(str, "e %8ld", m.energy);
+        LCD_Print(40, 145, str, CYAN, BLUE);
         sprintf(str, "f %8d", m.frequency);
-        LCD_Print(40, 135, str, CYAN, BLUE);
+        LCD_Print(40, 175, str, CYAN, BLUE);
         sprintf(str, "pf %7d", m.powerFactor);
-        LCD_Print(40, 155, str, CYAN, BLUE);
+        LCD_Print(40, 205, str, CYAN, BLUE);
 #endif
         measurement.energy = m.energy;
         if (firstRead) {
@@ -644,11 +644,11 @@ static void pzemRead(void) {
 #ifndef DEBUG_PZEM_UART
         const char *str = "          ";
         LCD_Print(40, 55, str, CYAN, BLUE);
-        LCD_Print(40, 75, "PZEM Error", RED, BLUE);
-        LCD_Print(40, 95, str, CYAN, BLUE);
+        LCD_Print(40, 85, "PZEM Error", RED, BLUE);
         LCD_Print(40, 115, str, CYAN, BLUE);
-        LCD_Print(40, 135, str, CYAN, BLUE);
-        LCD_Print(40, 155, str, CYAN, BLUE);
+        LCD_Print(40, 145, str, CYAN, BLUE);
+        LCD_Print(40, 175, str, CYAN, BLUE);
+        LCD_Print(40, 205, str, CYAN, BLUE);
 #endif
     }
 }

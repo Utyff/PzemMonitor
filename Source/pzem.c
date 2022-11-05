@@ -148,7 +148,7 @@ static void Pzem_uartCB(uint8 port, uint8 event) {
         HalUARTRead(port, &byte, 1);
 
         if (pzemRequestState != Wait) {
-            // read but don`t save
+            // unexpected data, read and drop. Something bad but ignore it.
             continue;
         }
 
@@ -159,6 +159,7 @@ static void Pzem_uartCB(uint8 port, uint8 event) {
             continue;
         }
 
+        // when read enough bytes for error message - check for error code
         if (responseCounter == PZEM_ERROR_ANSWER_SIZE) {
             if (response[1] == PZEM_ERROR_ANSWER_CODE) {
                 pzemRequestState = Error;
@@ -215,10 +216,7 @@ bool Pzem_getData(Pzem_measurement_t *measurement) {
     }
     measurement->voltage = (uint16) response[4] | (uint16) response[3] << 8;
     // checking that the data is correct
-    if (measurement->voltage < 1800 || measurement->voltage > 2500) {
-        measurement->voltage = 0;
-        return FALSE;
-    }
+
     measurement->current = (uint32) response[6] | (uint32) response[5] << 8 | (uint32) response[8] << 16 | (uint32) response[7] << 24;
     measurement->power = (uint32) response[10] | (uint32) response[9] << 8 | (uint32) response[12] << 16 | (uint32) response[11] << 24;
     measurement->energy = (uint32) response[14] | (uint32) response[13] << 8 | (uint32) response[16] << 16 | (uint32) response[15] << 24;

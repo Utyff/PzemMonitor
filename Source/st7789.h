@@ -32,6 +32,7 @@
 void LCD_Init(void);
 
 void LCD_Print(uint16 x, uint16 y, const char *str, uint16 color, uint16 bgcolor);
+void LCD_WriteChar(uint16 x, uint16 y, const char ch, uint16 color, uint16 bgcolor);
 
 void HW_DelayUs(uint16 microSecs);
 

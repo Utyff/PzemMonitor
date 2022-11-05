@@ -77,14 +77,6 @@ uint8 zclApp_DeviceEnable = DEVICE_ENABLED;
 // Состояние реле
 extern uint8 RELAY_STATE;
 
-// Данные о температуре
-#define MAX_MEASURED_VALUE  10000  // 100.00C
-#define MIN_MEASURED_VALUE  (-10000)  // -100.00C
-
-extern uint16 zclApp_MeasuredValue;
-const int16 zclApp_MinMeasuredValue = MIN_MEASURED_VALUE;
-const uint16 zclApp_MaxMeasuredValue = MAX_MEASURED_VALUE;
-
 /*********************************************************************
  * ATTRIBUTE DEFINITIONS - Uses REAL cluster IDs
  */
@@ -110,16 +102,6 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   {BASIC,{ATTRID_BASIC_DEVICE_ENABLED,    ZCL_BOOLEAN,  W, (void *)&zclApp_DeviceEnable}},
 
   {BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
-
-  // *** Атрибуты Temperature Measurement кластера ***
-  // Значение температуры
-  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MEASURED_VALUE,     ZCL_INT16,  RR, (void *) &zclApp_MeasuredValue}},
-  // минимальное значение температуры
-  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MIN_MEASURED_VALUE, ZCL_INT16,  R,  (void *) &zclApp_MinMeasuredValue}},
-  // максимальное значение температуры
-  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_MS_TEMPERATURE_MAX_MEASURED_VALUE, ZCL_INT16,  R,  (void *) &zclApp_MaxMeasuredValue}},
-  // версия кластера
-  {ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, {ATTRID_CLUSTER_REVISION,                  ZCL_UINT16, R,  (void *) &zclApp_clusterRevision_all}},
 
   // Electrical Measurements Cluster Attributes
   {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, R, (void *) &measurement.voltage}},

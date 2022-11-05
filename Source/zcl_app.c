@@ -56,9 +56,6 @@ byte zclApp_TaskID;
 // double click count
 uint8 clicks = 0;
 
-// Данные о температуре
-uint16 zclApp_MeasuredValue;
-
 // Структура для отправки отчета
 afAddrType_t zclApp_DstAddr;
 // Номер сообщения
@@ -66,8 +63,9 @@ uint8 SeqNum = 0;
 
 // last PZEM measured data
 Pzem_measurement_t measurement;
+// for calculation of the arithmetic mean
 static bool firstRead;
-static bool pzemState;
+static bool pzemNumRead;
 
 static uint32 zclApp_GenTime_old = 0;
 
@@ -211,6 +209,7 @@ void zclApp_Init(byte task_id) {
     bdb_StartCommissioning(BDB_COMMISSIONING_MODE_PARENT_LOST);
 
     // read PZEM every 1 sec
+    pzemNumRead = 1;
     osal_start_reload_timer(zclApp_TaskID, APP_PZEM_READ_EVT, 1000);
     // report measured data every 1 min
     osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, ((uint32) 60 * 1000));
@@ -292,7 +291,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     if (events & APP_PZEM_READ_EVT) {
 #ifndef DEBUG_LCD_UART
-        Pzem_RequestData(1);
+        Pzem_RequestData(pzemNumRead);
 #endif
         osal_start_timerEx(zclApp_TaskID, APP_PZEM_DATA_READY_EVT, PZEM_READ_TIME);
         return (events ^ APP_PZEM_READ_EVT);
@@ -302,6 +301,17 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 #ifndef DEBUG_LCD_UART
         pzemRead();
 #endif
+        // read data from next PZEM module
+        if (pzemNumRead < 3) {
+            pzemNumRead++;
+#ifndef DEBUG_LCD_UART
+            Pzem_RequestData(pzemNumRead);
+#endif
+            osal_start_timerEx(zclApp_TaskID, APP_PZEM_DATA_READY_EVT, PZEM_READ_TIME);
+        } else {
+            // when read 3 modules - stop reading
+            pzemNumRead = 1;
+        }
         return (events ^ APP_PZEM_DATA_READY_EVT);
     }
 
@@ -603,52 +613,66 @@ static uint8 zclApp_ProcessInDefaultRspCmd(zclIncomingMsg_t *pInMsg) {
     return (TRUE);
 }
 
+#define BX 40
+#define BY 55
+#define STEP_X 11
+#define STEP_Y 20
+
 static void pzemRead(void) {
     Pzem_measurement_t m;
+    char str[22];
     if (Pzem_getData(&m)) {
 #ifndef DEBUG_PZEM_UART
-        char str[22];
-        sprintf(str, "v %6d", m.voltage);
-        LCD_Print(40, 55, str, CYAN, BLUE);
-        sprintf(str, "c %8ld", m.current);
-        LCD_Print(40, 85, str, CYAN, BLUE);
-        sprintf(str, "p %8ld", m.power);
-        LCD_Print(40, 115, str, CYAN, BLUE);
-        sprintf(str, "e %8ld", m.energy);
-        LCD_Print(40, 145, str, CYAN, BLUE);
-        sprintf(str, "f %8d", m.frequency);
-        LCD_Print(40, 175, str, CYAN, BLUE);
-        sprintf(str, "pf %7d", m.powerFactor);
-        LCD_Print(40, 205, str, CYAN, BLUE);
+        if (pzemNumRead == 1) {
+//            sprintf(str, "v %6d", m.voltage);
+//            LCD_Print(BX, BY, str, CYAN, BLUE);
+//            sprintf(str, "c %8ld", m.current);
+//            LCD_Print(BX, BY + STEP_Y, str, CYAN, BLUE);
+//            sprintf(str, "p %8ld", m.power);
+//            LCD_Print(BX, BY + STEP_Y * 2, str, CYAN, BLUE);
+//            sprintf(str, "e %8ld", m.energy);
+//            LCD_Print(BX, BY + STEP_Y * 3, str, CYAN, BLUE);
+            sprintf(str, "f %8d", m.frequency);
+            LCD_Print(BX, BY + STEP_Y * 4, str, CYAN, BLUE);
+//            sprintf(str, "pf %7d", m.powerFactor);
+//            LCD_Print(BX, BY + STEP_Y * 5, str, CYAN, BLUE);
+        }
+        if (pzemNumRead == 2) {
+            sprintf(str, "f2 %8d", m.frequency);
+            LCD_Print(BX, BY + STEP_Y * 6, str, CYAN, BLUE);
+        }
+        if (pzemNumRead == 3) {
+            sprintf(str, "f3 %8d", m.frequency);
+            LCD_Print(BX, BY + STEP_Y * 7, str, CYAN, BLUE);
+        }
+        LCD_WriteChar(BX + pzemNumRead * STEP_X, BY + STEP_Y * 9, ' ', RED, BLUE);
 #endif
         measurement.energy = m.energy;
         if (firstRead) {
-            firstRead = FALSE;
-            zclApp_MeasuredValue = m.voltage;
-            measurement.voltage = m.voltage;
-            measurement.current = m.current;
-            measurement.power = m.power;
-            measurement.frequency = m.frequency;
-            measurement.powerFactor = m.powerFactor;
+            if (pzemNumRead == 1) {
+                measurement.voltage = m.voltage;
+                measurement.current = m.current;
+                measurement.power = m.power;
+                measurement.frequency = m.frequency;
+                measurement.powerFactor = m.powerFactor;
+            }
+            if (pzemNumRead == 3) {
+                firstRead = FALSE;
+            }
         } else {
-            zclApp_MeasuredValue = (zclApp_MeasuredValue + m.voltage) / 2;
-            measurement.voltage = (measurement.voltage + m.voltage) / 2;
-            measurement.current = (measurement.current + m.current) / 2;
-            measurement.power = (measurement.power + m.power) / 2;
-            measurement.frequency = (measurement.frequency + m.frequency) / 2;
-            measurement.powerFactor = (measurement.powerFactor + m.powerFactor) / 2;
+            if (pzemNumRead == 1) {
+                measurement.voltage = (measurement.voltage + m.voltage) / 2;
+                measurement.current = (measurement.current + m.current) / 2;
+                measurement.power = (measurement.power + m.power) / 2;
+                measurement.frequency = (measurement.frequency + m.frequency) / 2;
+                measurement.powerFactor = (measurement.powerFactor + m.powerFactor) / 2;
+            }
         }
         LREP("v:%d c:%ld e:%ld f:%d pf:%d\r\n", measurement.voltage, measurement.current, measurement.energy, measurement.frequency, measurement.powerFactor);
     } else {
         LREPMaster("PZEM read error\r\n");
 #ifndef DEBUG_PZEM_UART
-        const char *str = "          ";
-        LCD_Print(40, 55, str, CYAN, BLUE);
-        LCD_Print(40, 85, "PZEM Error", RED, BLUE);
-        LCD_Print(40, 115, str, CYAN, BLUE);
-        LCD_Print(40, 145, str, CYAN, BLUE);
-        LCD_Print(40, 175, str, CYAN, BLUE);
-        LCD_Print(40, 205, str, CYAN, BLUE);
+        LCD_WriteChar(BX + pzemNumRead * STEP_X, BY + STEP_Y * 9, '0' + pzemNumRead, RED, BLUE);
 #endif
     }
 }

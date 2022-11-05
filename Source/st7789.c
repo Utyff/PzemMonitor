@@ -328,7 +328,7 @@ static void LCD_SetAddressWindow(uint16 x0, uint16 y0, uint16 x1, uint16 y1) {
  * @param bgcolor -> background color of the char
  * @return  none
  */
-void LCD_WriteChar(uint16 x, uint16 y, char ch, uint16 color, uint16 bgcolor) {
+void LCD_WriteChar(uint16 x, uint16 y, const char ch, uint16 color, uint16 bgcolor) {
     uint16 i, j;
     uint16 b;
     LCD_SetAddressWindow(x, y, x + FONT_WIDTH - 1, y + FONT_HEIGHT - 1);

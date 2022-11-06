@@ -65,7 +65,7 @@ uint8 SeqNum = 0;
 Pzem_measurement_t measurement;
 // for calculation of the arithmetic mean
 static bool firstRead;
-static bool pzemNumRead;
+static uint8 pzemNumRead;
 
 static uint32 zclApp_GenTime_old = 0;
 
@@ -87,6 +87,8 @@ static void zclApp_ProcessIdentifyTimeChange(uint8 endpoint);
 static void zclApp_BindNotification(bdbBindNotificationData_t *data);
 
 static void zclApp_ProcessCommissioningStatus(bdbCommissioningModeMsg_t *bdbCommissioningModeMsg);
+
+static void zclApp_initPWM(void);
 
 // Functions to process ZCL Foundation incoming Command/Response messages
 static void zclApp_ProcessIncomingMsg(zclIncomingMsg_t *msg);
@@ -167,6 +169,7 @@ void zclApp_Init(byte task_id) {
 #ifndef DEBUG_PZEM_UART
     LCD_Init();
 #endif
+    zclApp_initPWM();
 
     zclApp_TaskID = task_id;
     LREP("zclApp_Init - %d\r\n", task_id);
@@ -357,6 +360,31 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     // Discard unknown events
     return 0;
+}
+
+/**
+ * Configure Timer 3 Ch1 for PWM signal
+ */
+static void zclApp_initPWM(void) {
+    PERCFG &= ~(0x20); // Select Timer 3 Alternative 1 location
+    P2SEL |= 0x20;
+    P2DIR |= 0xC0;     // Give priority to Timer 1 channel2-3
+    P1SEL |= BV(4);    // Set P1_4 to peripheral, Timer 1,channel 2
+    P1DIR |= BV(4);
+
+    T3CTL &= ~BV(4);   // Stop timer 3 (if it was running)
+    T3CTL |= BV(2);    // Clear timer 3
+    T3CTL &= ~0x08;    // Disable Timer 3 overflow interrupts
+//    T3CTL &= ~0x03;    // Timer 3 mode = 0 - Free-running, repeatedly count from 0x00 to 0xFF
+
+    T3CCTL1 &= ~0x40;  // Disable channel 1 interrupts
+    T3CCTL1 |= BV(2);  // Ch1 mode = compare
+    T3CCTL1 |= BV(5) | BV(3); // Ch1 output compare mode = Set output on compare, clear on 0xFF
+
+    T3CTL |= BV(7) | BV(6) | BV(5); // Prescaler divider - Tick frequency / 128
+    T3CC1 = 10;                     // PWM duty cycle: 0 - 0xff
+
+    T3CTL |= BV(4);    // start timer 3
 }
 
 void zclApp_SetTimeDate(void) {

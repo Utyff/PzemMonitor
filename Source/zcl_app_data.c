@@ -4,7 +4,6 @@
 #include "zcl.h"
 #include "zcl_general.h"
 #include "zcl_ha.h"
-#include "zcl_ms.h"
 #include "zcl_electrical_measurement.h"
 
 #include "zcl_app.h"
@@ -104,12 +103,12 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
   {BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 
   // Electrical Measurements Cluster Attributes
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, R, (void *) &measurement.voltage}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, R, (void *) &measurement.current}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, R, (void *) &measurement.power}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, R, (void *) &measurement.energy}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, R, (void *) &measurement.frequency}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, R, (void *) &measurement.powerFactor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, RR, (void *) &measurement.voltage}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, RR, (void *) &measurement.current}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, RR, (void *) &measurement.power}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, RR, (void *) &measurement.energy}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, RR, (void *) &measurement.frequency}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, RR, (void *) &measurement.powerFactor}},
 
   {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 
@@ -134,7 +133,9 @@ const cId_t zclApp_InClusterList[] = {
 
 
 const cId_t zclApp_OutClusterList[] = {
-  BASIC
+  BASIC,
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,
+  GEN_TIME
 };
 
 #define ZCLAPP_MAX_OUTCLUSTERS  (sizeof(zclApp_OutClusterList) / sizeof(zclApp_OutClusterList[0]))

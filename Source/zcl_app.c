@@ -3,7 +3,6 @@
 #include "OSAL_Clock.h"
 #include "AF.h"
 #include "ZDApp.h"
-#include "ZDObject.h"
 
 #include "zcl.h"
 #include "zcl_general.h"
@@ -113,7 +112,7 @@ static void pzemRead(void);
 // Выход из сети
 void zclApp_LeaveNetwork(void);
 
-// Отправка отчета о температуре
+// Report measured data
 void zclApp_ReportData(void);
 
 /*********************************************************************
@@ -217,7 +216,7 @@ void zclApp_Init(byte task_id) {
     // report measured data every 1 min
     osal_start_reload_timer(zclApp_TaskID, APP_REPORT_EVT, ((uint32) 60 * 1000));
     // report time every 1 min
-    osal_start_reload_timer(zclApp_TaskID, APP_REPORT_CLOCK_EVT, (uint32) 60000);
+//    osal_start_reload_timer(zclApp_TaskID, APP_REPORT_CLOCK_EVT, (uint32) 60000);
 
     zclApp_SetTimeDate();
 }
@@ -271,7 +270,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     // blink when join network
     if (events & APP_EVT_BLINK) {
-        LREPMaster("APP_EVT_BLINK\r\n");
+        LREPMaster((uint8*)"APP_EVT_BLINK\r\n");
         // В сети или не в сети?
         if (bdbAttributes.bdbNodeIsOnANetwork) {
             // гасим светодиод
@@ -286,7 +285,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     }
 
     if (events & APP_REPORT_EVT) {
-//        bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_MS_TEMPERATURE_MEASUREMENT, ATTRID_MS_TEMPERATURE_MEASURED_VALUE);
+//        LREPMaster((uint8*)"APP_REPORT_EVT\r\n");
         zclApp_ReportData();
         firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
@@ -320,21 +319,21 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 
     if (events & APP_BTN_CLICK_EVT) {
         clicks = 0;
-        LREPMaster("APP_BTN_CLICK_EVT\r\n");
+        LREPMaster((uint8*)"APP_BTN_CLICK_EVT\r\n");
         zclApp_BtnClick();
         return (events ^ APP_BTN_CLICK_EVT);
     }
 
     if (events & APP_BTN_DOUBLE_EVT) {
         clicks = 0;
-        LREPMaster("APP_BTN_DOUBLE_EVT\r\n");
+        LREPMaster((uint8*)"APP_BTN_DOUBLE_EVT\r\n");
         zclApp_BtnDblClick();
         return (events ^ APP_BTN_DOUBLE_EVT);
     }
 
     if (events & APP_BTN_HOLD_EVT) {
         clicks = 0;
-        LREPMaster("APP_BTN_HOLD_EVT\r\n");
+        LREPMaster((uint8*)"APP_BTN_HOLD_EVT\r\n");
         zclApp_BtnHold();
         return (events ^ APP_BTN_HOLD_EVT);
     }
@@ -363,7 +362,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
 }
 
 /**
- * Configure Timer 3 Ch1 for PWM signal
+ * Configure Timer 3 Ch1 as PWM for LCD backlight
  */
 static void zclApp_initPWM(void) {
     PERCFG &= ~(0x20); // Select Timer 3 Alternative 1 location
@@ -382,7 +381,7 @@ static void zclApp_initPWM(void) {
     T3CCTL1 |= BV(5) | BV(3); // Ch1 output compare mode = Set output on compare, clear on 0xFF
 
     T3CTL |= BV(7) | BV(6) | BV(5); // Prescaler divider - Tick frequency / 128
-    T3CC1 = 10;                     // PWM duty cycle: 0 - 0xff
+    T3CC1 = 230;                    // PWM duty cycle: 10 - bright, 230 - dark
 
     T3CTL |= BV(4);    // start timer 3
 }
@@ -408,7 +407,8 @@ void zclApp_SetTimeDate(void) {
 
 
 static void zclApp_SaveAttributesToNV(void) {
-    uint8 writeStatus = 0; // osal_nv_write(NW_APP_CONFIG, 0, sizeof(application_config_t), &zclApp_Config);
+    uint8 writeStatus = 0;
+    // osal_nv_write(NW_APP_CONFIG, 0, sizeof(application_config_t), &zclApp_Config);
     LREP("Saving attributes to NV write=%d\r\n", writeStatus);
 
     zclApp_GenTime_old = zclApp_GenTime_TimeUTC;
@@ -698,7 +698,7 @@ static void pzemRead(void) {
         }
         LREP("v:%d c:%ld e:%ld f:%d pf:%d\r\n", measurement.voltage, measurement.current, measurement.energy, measurement.frequency, measurement.powerFactor);
     } else {
-        LREPMaster("PZEM read error\r\n");
+        LREPMaster((uint8*)"PZEM read error\r\n");
 #ifndef DEBUG_PZEM_UART
         LCD_WriteChar(BX + pzemNumRead * STEP_X, BY + STEP_Y * 9, '0' + pzemNumRead, RED, BLUE);
 #endif
@@ -726,9 +726,10 @@ void zclApp_LeaveNetwork(void) {
     }
 }
 
-// Информирование о температуре
+// Report measured data
 void zclApp_ReportData(void) {
-    const uint8 NUM_ATTRIBUTES = 7;
+    LREP("RepData - %d\r\n", 0);
+    const uint8 NUM_ATTRIBUTES = 6;
 
     zclReportCmd_t *pReportCmd;
 
@@ -770,11 +771,6 @@ void zclApp_ReportData(void) {
         pReportCmd->attrList[5].dataType = ZCL_DATATYPE_UINT16;
         pReportCmd->attrList[5].attrData = (void *) (&measurement.powerFactor);
 
-        // powerFactor
-        pReportCmd->attrList[6].attrID = ATTRID_TIME_LOCAL_TIME;
-        pReportCmd->attrList[6].dataType = ZCL_DATATYPE_UINT32;
-        pReportCmd->attrList[6].attrData = (void *) (&zclApp_GenTime_TimeUTC);
-
         zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
                           ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, pReportCmd,
                           ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
@@ -797,7 +793,7 @@ static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {
             osal_stop_timerEx(zclApp_TaskID, APP_BTN_CLICK_EVT);
         }
         if (portAndAction & HAL_KEY_RELEASE) {
-            LREPMaster("Key released\r\n");
+            LREPMaster((uint8*)"Key released\r\n");
 
             osal_stop_timerEx(zclApp_TaskID, APP_BTN_HOLD_EVT);
             if (clicks == 1) {

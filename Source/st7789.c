@@ -86,7 +86,7 @@
 }
 
 // macros for transmit byte
-// clear the received and transmit byte status, write tx data to buffer, wait till transmit done
+// wait till previous transmit done then clear the received and transmit byte status then write tx data to buffer
 #define SPI_TX(byte)          { while(U1CSR & BV(0)); U1CSR &= ~(BV(2) | BV(1)); U1DBUF = byte; }
 
 // macros for DC pin control

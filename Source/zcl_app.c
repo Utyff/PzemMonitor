@@ -728,55 +728,7 @@ void zclApp_LeaveNetwork(void) {
 
 // Report measured data
 void zclApp_ReportData(void) {
-    LREP("RepData - %d\r\n", 0);
-    const uint8 NUM_ATTRIBUTES = 6;
-
-    zclReportCmd_t *pReportCmd;
-
-    pReportCmd = osal_mem_alloc(sizeof(zclReportCmd_t) + (NUM_ATTRIBUTES * sizeof(zclReport_t)));
-    if (pReportCmd != NULL) {
-        pReportCmd->numAttr = NUM_ATTRIBUTES;
-
-        zclApp_DstAddr.addrMode = (afAddrMode_t) Addr16Bit;
-        zclApp_DstAddr.addr.shortAddr = 0;
-        zclApp_DstAddr.endPoint = 1;
-
-        // voltage
-        pReportCmd->attrList[0].attrID = ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE;
-        pReportCmd->attrList[0].dataType = ZCL_DATATYPE_INT16;
-        pReportCmd->attrList[0].attrData = (void *) (&measurement.voltage);
-
-        // current
-        pReportCmd->attrList[1].attrID = ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT;
-        pReportCmd->attrList[1].dataType = ZCL_DATATYPE_UINT32;
-        pReportCmd->attrList[1].attrData = (void *) (&measurement.current);
-
-        // power
-        pReportCmd->attrList[2].attrID = ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER;
-        pReportCmd->attrList[2].dataType = ZCL_DATATYPE_UINT32;
-        pReportCmd->attrList[2].attrData = (void *) (&measurement.power);
-
-        // energy
-        pReportCmd->attrList[3].attrID = ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER;
-        pReportCmd->attrList[3].dataType = ZCL_DATATYPE_UINT32;
-        pReportCmd->attrList[3].attrData = (void *) (&measurement.energy);
-
-        // frequency
-        pReportCmd->attrList[4].attrID = ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY;
-        pReportCmd->attrList[4].dataType = ZCL_DATATYPE_UINT16;
-        pReportCmd->attrList[4].attrData = (void *) (&measurement.frequency);
-
-        // powerFactor
-        pReportCmd->attrList[5].attrID = ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR;
-        pReportCmd->attrList[5].dataType = ZCL_DATATYPE_UINT16;
-        pReportCmd->attrList[5].attrData = (void *) (&measurement.powerFactor);
-
-        zcl_SendReportCmd(APP_ENDPOINT, &zclApp_DstAddr,
-                          ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, pReportCmd,
-                          ZCL_FRAME_CLIENT_SERVER_DIR, false, SeqNum++);
-    }
-
-    osal_mem_free(pReportCmd);
+    LREP("RepData - %d\r\n", bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE));
 }
 
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {

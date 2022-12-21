@@ -728,7 +728,9 @@ void zclApp_LeaveNetwork(void) {
 
 // Report measured data
 void zclApp_ReportData(void) {
-    LREP("RepData - %d\r\n", bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE));
+    // one call for all attributes report
+    ZStatus_t res = bdb_RepChangedAttrValue(APP_ENDPOINT, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE);
+    LREP("RepData - %d\r\n", res);
 }
 
 static void zclApp_HandleKeys(byte portAndAction, byte keyCode) {

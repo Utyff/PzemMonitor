@@ -65,11 +65,51 @@ const device = {
     configure: async (device, coordinatorEndpoint, logger) => {
         const endpoint = device.getEndpoint(1);
         await bind(endpoint, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
-        await reporting.rmsVoltage(endpoint);
-        await reporting.rmsCurrent(endpoint);
-        await reporting.activePower(endpoint);
-        await reporting.acFrequency(endpoint);
-        await reporting.powerFactor(endpoint);
+
+        const rmsVoltageBindPayload = [{
+            attribute: 'rmsVoltage',
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 0,
+        }];
+        await endpoint.configureReporting('haElectricalMeasurement', rmsVoltageBindPayload);
+        // await reporting.rmsVoltage(endpoint);
+
+        const rmsCurrentBindPayload = [{
+            attribute: 'rmsCurrent',
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 0,
+        }];
+        await endpoint.configureReporting('haElectricalMeasurement', rmsCurrentBindPayload);
+        // await reporting.rmsCurrent(endpoint);
+
+        const activePowerBindPayload = [{
+            attribute: 'activePower',
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 0,
+        }];
+        await endpoint.configureReporting('haElectricalMeasurement', activePowerBindPayload);
+        // await reporting.activePower(endpoint);
+
+        const acFrequencyBindPayload = [{
+            attribute: 'acFrequency',
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 0,
+        }];
+        await endpoint.configureReporting('haElectricalMeasurement', acFrequencyBindPayload);
+        // await reporting.acFrequency(endpoint);
+
+        const powerFactorBindPayload = [{
+            attribute: 'powerFactor',
+            minimumReportInterval: 0,
+            maximumReportInterval: 3600,
+            reportableChange: 0,
+        }];
+        await endpoint.configureReporting('haElectricalMeasurement', powerFactorBindPayload);
+        // await reporting.powerFactor(endpoint);
 
         const timeBindPayload = [{
             attribute: 'localTime',

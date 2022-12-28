@@ -1,7 +1,6 @@
 const {
     fromZigbeeConverters,
     toZigbeeConverters,
-    reporting,
     exposes
 } = require('zigbee-herdsman-converters');
 
@@ -9,6 +8,7 @@ const ACCESS_STATE = 0b001, ACCESS_WRITE = 0b010, ACCESS_READ = 0b100;
 
 const OneJanuary2000 = new Date('January 01, 2000 00:00:00 UTC+00:00').getTime();
 
+const reporting = require('zigbee-herdsman-converters/lib/reporting');
 const e = exposes.presets;
 const ea = exposes.access;
 
@@ -42,12 +42,6 @@ const tz = {
     },
 };
 
-const bind = async (endpoint, target, clusters) => {
-    for (const cluster of clusters) {
-        await endpoint.bind(cluster, target);
-    }
-};
-
 const device = {
     zigbeeModel: ['DIYRuZ_PzemMonitor'],
     model: 'DIYRuZ_PzemMonitor',
@@ -66,9 +60,9 @@ const device = {
         const endpoint1 = device.getEndpoint(1);
         const endpoint2 = device.getEndpoint(2);
         const endpoint3 = device.getEndpoint(3);
-        await bind(endpoint1, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
-        await bind(endpoint2, coordinatorEndpoint, ['haElectricalMeasurement']);
-        await bind(endpoint3, coordinatorEndpoint, ['haElectricalMeasurement']);
+        await reporting.bind(endpoint1, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
+        await reporting.bind(endpoint2, coordinatorEndpoint, ['haElectricalMeasurement']);
+        await reporting.bind(endpoint3, coordinatorEndpoint, ['haElectricalMeasurement']);
 
         const rmsVoltageBindPayload = [{
             attribute: 'rmsVoltage',
@@ -115,17 +109,17 @@ const device = {
         await endpoint1.configureReporting('haElectricalMeasurement', powerFactorBindPayload);
         // await reporting.powerFactor(endpoint);
 
-        const timeBindPayload = [{
-            attribute: 'localTime',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('genTime', timeBindPayload);
+        // const timeBindPayload = [{
+        //     attribute: 'localTime',
+        //     minimumReportInterval: 0,
+        //     maximumReportInterval: 3600,
+        //     reportableChange: 0,
+        // }];
+        // await endpoint1.configureReporting('genTime', timeBindPayload);
 
-        const time = Math.round((((new Date()).getTime() - OneJanuary2000) / 1000) + (((new Date()).getTimezoneOffset() * -1) * 60));
+        // const time = Math.round((((new Date()).getTime() - OneJanuary2000) / 1000) + (((new Date()).getTimezoneOffset() * -1) * 60));
         // Time-master + synchronised
-        firstEndpoint.write('genTime', {time: time});
+        // endpoint1.write('genTime', {time: time});
     },
     exposes: [e.voltage(),
         e.current(),

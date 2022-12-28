@@ -69,7 +69,14 @@ const uint8 zclApp_ManufacturerName[] = { 6, 'D', 'I', 'Y', 'R', 'u', 'Z' };
 const uint8 zclApp_ModelId[] = {18, 'D', 'I', 'Y', 'R', 'u', 'Z', '_', 'P', 'z', 'e', 'm', 'M', 'o', 'n', 'i', 't', 'o', 'r' };
 const uint8 zclApp_PowerSource = POWER_SOURCE_MAINS_1_PHASE;
 
-uint8 zclApp_LocationDescription[17] = { 16, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
+const uint16 acVoltageMultiplier = 1;
+const uint16 acVoltageDivisor = 10;
+const uint16 acCurrentMultiplier = 1;
+const uint16 acCurrentDivisor = 100;
+const uint16 acFrequencyMultiplier = 1;
+const uint16 acFrequencyDivisor = 10;
+
+uint8 zclApp_LocationDescription[17]; // = { 16, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' };
 uint8 zclApp_PhysicalEnvironment = 0;
 uint8 zclApp_DeviceEnable = DEVICE_ENABLED;
 
@@ -79,7 +86,7 @@ extern uint8 RELAY_STATE;
 /*********************************************************************
  * ATTRIBUTE DEFINITIONS - Uses REAL cluster IDs
  */
-CONST zclAttrRec_t zclApp_Attrs[] = {
+CONST zclAttrRec_t zclApp_Attrs1[] = {
   // *** General Basic Cluster Attributes ***
   // Cluster IDs - defined in the foundation (ie. zcl.h)
   // Attribute record
@@ -102,55 +109,138 @@ CONST zclAttrRec_t zclApp_Attrs[] = {
 
   {BASIC,{ATTRID_CLUSTER_REVISION, ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 
-  // Electrical Measurements Cluster Attributes
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, RR, (void *) &measurement.voltage}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, RR, (void *) &measurement.current}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, RR, (void *) &measurement.power}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, RR, (void *) &measurement.energy}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, RR, (void *) &measurement.frequency}},
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, RR, (void *) &measurement.powerFactor}},
-
-  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
-
   {GEN_TIME, {ATTRID_TIME_TIME,       ZCL_UTC,    RRW, (void *) &zclApp_GenTime_TimeUTC}},
   {GEN_TIME, {ATTRID_TIME_LOCAL_TIME, ZCL_UINT32, RRW, (void *) &zclApp_GenTime_TimeUTC}},
+
+  // Electrical Measurements Cluster Attributes
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_MULTIPLIER,   ZCL_UINT16, R, (void *) &acVoltageMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_DIVISOR,      ZCL_UINT16, R, (void *) &acVoltageDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_MULTIPLIER,   ZCL_UINT16, R, (void *) &acCurrentMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_DIVISOR,      ZCL_UINT16, R, (void *) &acCurrentDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_MULTIPLIER, ZCL_UINT16, R, (void *) &acFrequencyMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_DIVISOR,    ZCL_UINT16, R, (void *) &acFrequencyDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, RR, (void *) &measurement[0].voltage}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, RR, (void *) &measurement[0].current}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, RR, (void *) &measurement[0].power}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, RR, (void *) &measurement[0].energy}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, RR, (void *) &measurement[0].frequency}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, RR, (void *) &measurement[0].powerFactor}},
+
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
 };
 
-uint8 CONST zclApp_NumAttributes = (sizeof(zclApp_Attrs) / sizeof(zclApp_Attrs[0]));
+CONST zclAttrRec_t zclApp_Attrs2[] = {
+  // Electrical Measurements Cluster Attributes
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_MULTIPLIER,   ZCL_UINT16, R, (void *) &acVoltageMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_DIVISOR,      ZCL_UINT16, R, (void *) &acVoltageDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_MULTIPLIER,   ZCL_UINT16, R, (void *) &acCurrentMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_DIVISOR,      ZCL_UINT16, R, (void *) &acCurrentDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_MULTIPLIER, ZCL_UINT16, R, (void *) &acFrequencyMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_DIVISOR,    ZCL_UINT16, R, (void *) &acFrequencyDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, RR, (void *) &measurement[1].voltage}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, RR, (void *) &measurement[1].current}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, RR, (void *) &measurement[1].power}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, RR, (void *) &measurement[1].energy}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, RR, (void *) &measurement[1].frequency}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, RR, (void *) &measurement[1].powerFactor}},
+
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
+};
+
+CONST zclAttrRec_t zclApp_Attrs3[] = {
+  // Electrical Measurements Cluster Attributes
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_MULTIPLIER,   ZCL_UINT16, R, (void *) &acVoltageMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_VOLTAGE_DIVISOR,      ZCL_UINT16, R, (void *) &acVoltageDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_MULTIPLIER,   ZCL_UINT16, R, (void *) &acCurrentMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_CURRENT_DIVISOR,      ZCL_UINT16, R, (void *) &acCurrentDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_MULTIPLIER, ZCL_UINT16, R, (void *) &acFrequencyMultiplier}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY_DIVISOR,    ZCL_UINT16, R, (void *) &acFrequencyDivisor}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_VOLTAGE,        ZCL_UINT16, RR, (void *) &measurement[2].voltage}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_RMS_CURRENT,        ZCL_UINT32, RR, (void *) &measurement[2].current}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_ACTIVE_POWER,       ZCL_UINT32, RR, (void *) &measurement[2].power}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_TOTAL_ACTIVE_POWER, ZCL_UINT32, RR, (void *) &measurement[2].energy}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY,       ZCL_UINT16, RR, (void *) &measurement[2].frequency}},
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, {ATTRID_ELECTRICAL_MEASUREMENT_POWER_FACTOR,       ZCL_UINT16, RR, (void *) &measurement[2].powerFactor}},
+
+  {ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,{ATTRID_CLUSTER_REVISION,  ZCL_UINT16, R, (void *)&zclApp_clusterRevision_all}},
+};
+
+uint8 CONST zclApp_NumAttributes1 = (sizeof(zclApp_Attrs1) / sizeof(zclApp_Attrs1[0]));
+uint8 CONST zclApp_NumAttributes2 = (sizeof(zclApp_Attrs2) / sizeof(zclApp_Attrs2[0]));
+uint8 CONST zclApp_NumAttributes3 = (sizeof(zclApp_Attrs3) / sizeof(zclApp_Attrs3[0]));
 
 /*********************************************************************
  * SIMPLE DESCRIPTOR
  */
 // This is the Cluster ID List and should be filled with Application
 // specific cluster IDs.
-const cId_t zclApp_InClusterList[] = {
+const cId_t zclApp_InClusterList1[] = {
   BASIC,
   ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,
   GEN_TIME
 };
-
-#define ZCLAPP_MAX_INCLUSTERS   (sizeof(zclApp_InClusterList) / sizeof(zclApp_InClusterList[0]))
-
-
-const cId_t zclApp_OutClusterList[] = {
-  BASIC,
+const cId_t zclApp_InClusterList2[] = {
   ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,
-  GEN_TIME
+};
+const cId_t zclApp_InClusterList3[] = {
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT,
 };
 
-#define ZCLAPP_MAX_OUTCLUSTERS  (sizeof(zclApp_OutClusterList) / sizeof(zclApp_OutClusterList[0]))
+#define ZCLAPP_MAX_INCLUSTERS1   (sizeof(zclApp_InClusterList1) / sizeof(zclApp_InClusterList1[0]))
+#define ZCLAPP_MAX_INCLUSTERS2   (sizeof(zclApp_InClusterList2) / sizeof(zclApp_InClusterList2[0]))
+#define ZCLAPP_MAX_INCLUSTERS3   (sizeof(zclApp_InClusterList3) / sizeof(zclApp_InClusterList3[0]))
 
 
-SimpleDescriptionFormat_t zclApp_Desc = {
-  APP_ENDPOINT,                  //  int Endpoint;
+const cId_t zclApp_OutClusterList1[] = {
+  BASIC,
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT
+};
+const cId_t zclApp_OutClusterList2[] = {
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT
+};
+const cId_t zclApp_OutClusterList3[] = {
+  ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT
+};
+
+#define ZCLAPP_MAX_OUTCLUSTERS1  (sizeof(zclApp_OutClusterList1) / sizeof(zclApp_OutClusterList1[0]))
+#define ZCLAPP_MAX_OUTCLUSTERS2  (sizeof(zclApp_OutClusterList2) / sizeof(zclApp_OutClusterList2[0]))
+#define ZCLAPP_MAX_OUTCLUSTERS3  (sizeof(zclApp_OutClusterList3) / sizeof(zclApp_OutClusterList3[0]))
+
+
+SimpleDescriptionFormat_t zclApp_Desc1 = {
+  APP_ENDPOINT1,                  //  int Endpoint;
   ZCL_HA_PROFILE_ID,             //  uint16 AppProfId;
   ZCL_HA_DEVICEID_METER_INTERFACE,//  uint16 AppDeviceId;
   APP_DEVICE_VERSION,            //  int   AppDevVer:4;
   APP_FLAGS,                     //  int   AppFlags:4;
-  ZCLAPP_MAX_INCLUSTERS,         //  byte  AppNumInClusters;
-  (cId_t *)zclApp_InClusterList, //  byte *pAppInClusterList;
-  ZCLAPP_MAX_OUTCLUSTERS,        //  byte  AppNumInClusters;
-  (cId_t *)zclApp_OutClusterList //  byte *pAppInClusterList;
+  ZCLAPP_MAX_INCLUSTERS1,         //  byte  AppNumInClusters;
+  (cId_t *)zclApp_InClusterList1, //  byte *pAppInClusterList;
+  ZCLAPP_MAX_OUTCLUSTERS1,        //  byte  AppNumInClusters;
+  (cId_t *)zclApp_OutClusterList1 //  byte *pAppInClusterList;
+};
+
+SimpleDescriptionFormat_t zclApp_Desc2 = {
+  APP_ENDPOINT2,                  //  int Endpoint;
+  ZCL_HA_PROFILE_ID,             //  uint16 AppProfId;
+  ZCL_HA_DEVICEID_METER_INTERFACE,//  uint16 AppDeviceId;
+  APP_DEVICE_VERSION,            //  int   AppDevVer:4;
+  APP_FLAGS,                     //  int   AppFlags:4;
+  ZCLAPP_MAX_INCLUSTERS2,         //  byte  AppNumInClusters;
+  (cId_t *)zclApp_InClusterList2, //  byte *pAppInClusterList;
+  ZCLAPP_MAX_OUTCLUSTERS2,        //  byte  AppNumInClusters;
+  (cId_t *)zclApp_OutClusterList2 //  byte *pAppInClusterList;
+};
+
+SimpleDescriptionFormat_t zclApp_Desc3 = {
+  APP_ENDPOINT3,                  //  int Endpoint;
+  ZCL_HA_PROFILE_ID,             //  uint16 AppProfId;
+  ZCL_HA_DEVICEID_METER_INTERFACE,//  uint16 AppDeviceId;
+  APP_DEVICE_VERSION,            //  int   AppDevVer:4;
+  APP_FLAGS,                     //  int   AppFlags:4;
+  ZCLAPP_MAX_INCLUSTERS3,         //  byte  AppNumInClusters;
+  (cId_t *)zclApp_InClusterList3, //  byte *pAppInClusterList;
+  ZCLAPP_MAX_OUTCLUSTERS3,        //  byte  AppNumInClusters;
+  (cId_t *)zclApp_OutClusterList3 //  byte *pAppInClusterList;
 };
 
 // Added to include ZLL Target functionality
@@ -176,7 +266,7 @@ bdbTLDeviceInfo_t tlApp_DeviceInfo =
 
 // initialize cluster attribute variables.
 void zclApp_ResetAttributesToDefaultValues(void) {
-    int i;
+    uint8 i;
 
     zclApp_LocationDescription[0] = 16;
     for (i = 1; i <= 16; i++) {
@@ -186,10 +276,12 @@ void zclApp_ResetAttributesToDefaultValues(void) {
     zclApp_PhysicalEnvironment = PHY_UNSPECIFIED_ENV;
     zclApp_DeviceEnable = DEVICE_ENABLED;
 
-    measurement.voltage = 0;
-    measurement.current = 0;
-    measurement.power = 0;
-    measurement.energy = 0;
-    measurement.frequency = 0;
-    measurement.powerFactor = 0;
+    for (i = 0; i < 3; i++) {
+        measurement[i].voltage = 0;
+        measurement[i].current = 0;
+        measurement[i].power = 0;
+        measurement[i].energy = 0;
+        measurement[i].frequency = 0;
+        measurement[i].powerFactor = 0;
+    }
 }

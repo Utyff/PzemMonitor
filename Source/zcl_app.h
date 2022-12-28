@@ -22,7 +22,9 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
-#define APP_ENDPOINT            1
+#define APP_ENDPOINT1            1
+#define APP_ENDPOINT2            2
+#define APP_ENDPOINT3            3
 
 // Application Events
 #define APP_EVT_BLINK                0x0001
@@ -56,15 +58,21 @@ extern "C"
   extern bdbTLDeviceInfo_t tlApp_DeviceInfo;
 #endif
 
-extern SimpleDescriptionFormat_t zclApp_Desc;
+extern SimpleDescriptionFormat_t zclApp_Desc1;
+extern SimpleDescriptionFormat_t zclApp_Desc2;
+extern SimpleDescriptionFormat_t zclApp_Desc3;
 
 // attribute list
-extern CONST zclAttrRec_t zclApp_Attrs[];
-extern CONST uint8 zclApp_NumAttributes;
+extern CONST zclAttrRec_t zclApp_Attrs1[];
+extern CONST zclAttrRec_t zclApp_Attrs2[];
+extern CONST zclAttrRec_t zclApp_Attrs3[];
+extern CONST uint8 zclApp_NumAttributes1;
+extern CONST uint8 zclApp_NumAttributes2;
+extern CONST uint8 zclApp_NumAttributes3;
 
 extern uint32 zclApp_GenTime_TimeUTC;
 
-extern Pzem_measurement_t measurement;
+extern Pzem_measurement_t measurement[3];
 
 /*********************************************************************
  * FUNCTIONS

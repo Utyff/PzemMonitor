@@ -2,8 +2,6 @@
 #define TC_LINKKEY_JOIN
 #define NV_INIT
 #define NV_RESTORE
-#define TP2_LEGACY_ZC
-#define NWK_AUTO_POLL
 #define MULTICAST_ENABLED FALSE
 #define ZCL_READ
 #define ZCL_WRITE
@@ -13,7 +11,6 @@
 #define ZCL_REPORTING_DEVICE
 #define ZCL_ELECTRICAL_MEASUREMENT
 
-#define BDB_FINDING_BINDING_CAPABILITY_ENABLED 1
 #define BDB_REPORTING TRUE
 #define DISABLE_GREENPOWER_BASIC_PROXY
 #define DEFAULT_CHANLIST 0x07FFF800  // Маска для работы на всех каналах
@@ -30,7 +27,7 @@
 // UART Baudrate 115200
 // DEBUG_PZEM_UART - UART0 used for PZEM, UART1 used for debug logging P16 - TX
 // DEBUG_LCD_UART - UART1 used for SPI LCD, UART0 used for debug logging P03 - TX
-#define DEBUG_PZEM_UART
+//#define DEBUG_PZEM_UART
 //#define DEBUG_LCD_UART
 
 // UART for PZEM communication
@@ -58,6 +55,6 @@
 #define HAL_UART_DMA 1
 #define HAL_UART_ISR 2
 
-#define INT_HEAP_LEN 2000
+#define INT_HEAP_LEN 1950
 
 #include "hal_board_cfg.h"

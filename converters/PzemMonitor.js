@@ -63,8 +63,12 @@ const device = {
         toZigbeeConverters.powerfactor,
         tz.local_time],
     configure: async (device, coordinatorEndpoint, logger) => {
-        const endpoint = device.getEndpoint(1);
-        await bind(endpoint, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
+        const endpoint1 = device.getEndpoint(1);
+        const endpoint2 = device.getEndpoint(2);
+        const endpoint3 = device.getEndpoint(3);
+        await bind(endpoint1, coordinatorEndpoint, ['haElectricalMeasurement', 'genTime']);
+        await bind(endpoint2, coordinatorEndpoint, ['haElectricalMeasurement']);
+        await bind(endpoint3, coordinatorEndpoint, ['haElectricalMeasurement']);
 
         const rmsVoltageBindPayload = [{
             attribute: 'rmsVoltage',
@@ -72,7 +76,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('haElectricalMeasurement', rmsVoltageBindPayload);
+        await endpoint1.configureReporting('haElectricalMeasurement', rmsVoltageBindPayload);
         // await reporting.rmsVoltage(endpoint);
 
         const rmsCurrentBindPayload = [{
@@ -81,7 +85,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('haElectricalMeasurement', rmsCurrentBindPayload);
+        await endpoint1.configureReporting('haElectricalMeasurement', rmsCurrentBindPayload);
         // await reporting.rmsCurrent(endpoint);
 
         const activePowerBindPayload = [{
@@ -90,7 +94,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('haElectricalMeasurement', activePowerBindPayload);
+        await endpoint1.configureReporting('haElectricalMeasurement', activePowerBindPayload);
         // await reporting.activePower(endpoint);
 
         const acFrequencyBindPayload = [{
@@ -99,7 +103,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('haElectricalMeasurement', acFrequencyBindPayload);
+        await endpoint1.configureReporting('haElectricalMeasurement', acFrequencyBindPayload);
         // await reporting.acFrequency(endpoint);
 
         const powerFactorBindPayload = [{
@@ -108,7 +112,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('haElectricalMeasurement', powerFactorBindPayload);
+        await endpoint1.configureReporting('haElectricalMeasurement', powerFactorBindPayload);
         // await reporting.powerFactor(endpoint);
 
         const timeBindPayload = [{
@@ -117,7 +121,7 @@ const device = {
             maximumReportInterval: 3600,
             reportableChange: 0,
         }];
-        await endpoint.configureReporting('genTime', timeBindPayload);
+        await endpoint1.configureReporting('genTime', timeBindPayload);
 
         const time = Math.round((((new Date()).getTime() - OneJanuary2000) / 1000) + (((new Date()).getTimezoneOffset() * -1) * 60));
         // Time-master + synchronised

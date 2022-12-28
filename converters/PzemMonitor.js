@@ -64,50 +64,11 @@ const device = {
         await reporting.bind(endpoint2, coordinatorEndpoint, ['haElectricalMeasurement']);
         await reporting.bind(endpoint3, coordinatorEndpoint, ['haElectricalMeasurement']);
 
-        const rmsVoltageBindPayload = [{
-            attribute: 'rmsVoltage',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('haElectricalMeasurement', rmsVoltageBindPayload);
-        // await reporting.rmsVoltage(endpoint);
-
-        const rmsCurrentBindPayload = [{
-            attribute: 'rmsCurrent',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('haElectricalMeasurement', rmsCurrentBindPayload);
-        // await reporting.rmsCurrent(endpoint);
-
-        const activePowerBindPayload = [{
-            attribute: 'activePower',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('haElectricalMeasurement', activePowerBindPayload);
-        // await reporting.activePower(endpoint);
-
-        const acFrequencyBindPayload = [{
-            attribute: 'acFrequency',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('haElectricalMeasurement', acFrequencyBindPayload);
-        // await reporting.acFrequency(endpoint);
-
-        const powerFactorBindPayload = [{
-            attribute: 'powerFactor',
-            minimumReportInterval: 0,
-            maximumReportInterval: 3600,
-            reportableChange: 0,
-        }];
-        await endpoint1.configureReporting('haElectricalMeasurement', powerFactorBindPayload);
-        // await reporting.powerFactor(endpoint);
+        await reporting.rmsVoltage(endpoint1, {min: 0, max: 3600, change: 0});
+        await reporting.rmsCurrent(endpoint1, {min: 0, max: 3600, change: 0});
+        await reporting.activePower(endpoint1, {min: 0, max: 3600, change: 0});
+        await reporting.acFrequency(endpoint1, {min: 0, max: 3600, change: 0});
+        await reporting.powerFactor(endpoint1, {min: 0, max: 3600, change: 0});
 
         // const timeBindPayload = [{
         //     attribute: 'localTime',

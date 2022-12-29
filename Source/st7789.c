@@ -4,6 +4,7 @@
 #include "hal_assert.h"
 #include "hal_types.h"
 #include "st7789.h"
+#include "version.h"
 
 /**
   LCD pins
@@ -270,7 +271,7 @@ void LCD_Init() {
     HW_DelayUs(1000);
     LCD_FillScreen(BLUE);               // Clean screen.
 
-    LCD_Print(25, 5, "PZEM Monitor v1.0", YELLOW, BLUE);
+    LCD_Print(25, 5, zclApp_DateCodeNT, YELLOW, BLUE);
 }
 
 /**

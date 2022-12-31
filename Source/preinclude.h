@@ -27,7 +27,7 @@
 // UART Baudrate 115200
 // DEBUG_PZEM_UART - UART0 used for PZEM, UART1 used for debug logging P16 - TX
 // DEBUG_LCD_UART - UART1 used for SPI LCD, UART0 used for debug logging P03 - TX
-//#define DEBUG_PZEM_UART
+#define DEBUG_PZEM_UART
 //#define DEBUG_LCD_UART
 
 // UART for PZEM communication

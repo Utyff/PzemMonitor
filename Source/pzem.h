@@ -19,10 +19,10 @@ typedef enum {
 typedef struct {
     uint16 voltage;
     uint16 current;
-    int16 power;
+    uint16 power;
     uint32 energy;
     uint16 frequency;
-    int8 powerFactor;
+    uint8 powerFactor;
 } Pzem_measurement_t;
 
 extern PzemState_t pzemRequestState;

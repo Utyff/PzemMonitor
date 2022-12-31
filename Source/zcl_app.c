@@ -55,15 +55,12 @@ byte zclApp_TaskID;
 // double click count
 uint8 clicks = 0;
 
-// Структура для отправки отчета
-afAddrType_t zclApp_DstAddr;
-// Номер сообщения
-uint8 SeqNum = 0;
-
+// data for zcl report
+Pzem_measurement_t zcl_measured[3];
 // last PZEM measured data
-Pzem_measurement_t measurement[3];
+Pzem_measurement_t measured[3];
 // for calculation of the arithmetic mean
-static bool firstRead;
+static bool firstRead[3];
 // 0, 1, 2 - PZEM address that we will read.
 static uint8 pzemAddrRead;
 
@@ -198,20 +195,15 @@ void zclApp_Init(byte task_id) {
     bdb_RegisterIdentifyTimeChangeCB(zclApp_ProcessIdentifyTimeChange);
     bdb_RegisterBindNotificationCB(zclApp_BindNotification);
 
-    // Установка адреса и эндпоинта для отправки отчета
-    zclApp_DstAddr.addrMode = (afAddrMode_t) AddrNotPresent;
-    zclApp_DstAddr.endPoint = 0;
-    zclApp_DstAddr.addr.shortAddr = 0;
-
     for (int i = 0; i < 3; i++) {
-        measurement[i].voltage = 0;
-        measurement[i].current = 0;
-        measurement[i].power = 0;
-        measurement[i].energy = 0;
-        measurement[i].frequency = 0;
-        measurement[i].powerFactor = 0;
+        measured[i].voltage = 0;
+        measured[i].current = 0;
+        measured[i].power = 0;
+        measured[i].energy = 0;
+        measured[i].frequency = 0;
+        measured[i].powerFactor = 0;
+        firstRead[i] = TRUE;
     }
-    firstRead = TRUE;
 
     // Старт процесса возвращения в сеть
     bdb_StartCommissioning(BDB_COMMISSIONING_MODE_PARENT_LOST);
@@ -291,9 +283,7 @@ uint16 zclApp_event_loop(uint8 task_id, uint16 events) {
     }
 
     if (events & APP_REPORT_EVT) {
-//        LREPMaster((uint8*)"APP_REPORT_EVT\r\n");
         zclApp_ReportData();
-        firstRead = TRUE;
         return (events ^ APP_REPORT_EVT);
     }
 
@@ -622,7 +612,7 @@ static uint8 zclApp_ProcessInWriteRspCmd(zclIncomingMsg_t *pInMsg) {
 
     writeRspCmd = (zclWriteRspCmd_t *) pInMsg->attrCmd;
     for (i = 0; i < writeRspCmd->numAttr; i++) {
-        // Notify the device of the results of the its original write attributes
+        // Notify the device of the results of the original write attributes
         // command.
     }
 
@@ -683,37 +673,30 @@ static void pzemRead(void) {
         }
         LCD_WriteChar(BX + pzemAddrRead * STEP_X, BY + STEP_Y * 9, ' ', RED, BLUE);
 #endif
-        LREP("%d - v:%d c:%ld e:%ld f:%d pf:%d\r\n", pzemAddrRead, m.voltage, m.current, m.energy, m.frequency, m.powerFactor);
-        measurement[pzemAddrRead].energy = m.energy;
-        if (firstRead) {
-            if (pzemAddrRead == 0) {
-                measurement[pzemAddrRead].voltage = m.voltage;
-                measurement[pzemAddrRead].current = m.current;
-                measurement[pzemAddrRead].power = m.power;
-                measurement[pzemAddrRead].frequency = m.frequency;
-                measurement[pzemAddrRead].powerFactor = m.powerFactor;
-            }
-            if (pzemAddrRead == 2) {
-                firstRead = FALSE;
-            }
+        LREP("%d - v:%d c:%d e:%ld f:%d pf:%d\r\n", pzemAddrRead, m.voltage, m.current, m.energy, m.frequency, m.powerFactor);
+        measured[pzemAddrRead].energy = m.energy;
+        if (firstRead[pzemAddrRead]) {
+            measured[pzemAddrRead].voltage = m.voltage;
+            measured[pzemAddrRead].current = m.current;
+            measured[pzemAddrRead].power = m.power;
+            measured[pzemAddrRead].frequency = m.frequency;
+            measured[pzemAddrRead].powerFactor = m.powerFactor;
+            firstRead[pzemAddrRead] = FALSE;
         } else {
-            if (pzemAddrRead == 0) {
-                measurement[pzemAddrRead].voltage = (measurement[pzemAddrRead].voltage + m.voltage) / 2;
-                measurement[pzemAddrRead].current = (measurement[pzemAddrRead].current + m.current) / 2;
-                measurement[pzemAddrRead].power = (measurement[pzemAddrRead].power + m.power) / 2;
-                measurement[pzemAddrRead].frequency = (measurement[pzemAddrRead].frequency + m.frequency) / 2;
-                measurement[pzemAddrRead].powerFactor = (measurement[pzemAddrRead].powerFactor + m.powerFactor) / 2;
-            }
+            measured[pzemAddrRead].voltage = (measured[pzemAddrRead].voltage + m.voltage) / 2;
+            measured[pzemAddrRead].current = (measured[pzemAddrRead].current + m.current) / 2;
+            measured[pzemAddrRead].power = (measured[pzemAddrRead].power + m.power) / 2;
+            measured[pzemAddrRead].frequency = (measured[pzemAddrRead].frequency + m.frequency) / 2;
+            measured[pzemAddrRead].powerFactor = (measured[pzemAddrRead].powerFactor + m.powerFactor) / 2;
         }
     } else {
-        LREPMaster((uint8 *) "PZEM read error\r\n");
+        LREP("PZEM %d read error\r\n", pzemAddrRead);
 #ifndef DEBUG_PZEM_UART
         LCD_WriteChar(BX + pzemAddrRead * STEP_X, BY + STEP_Y * 9, '0' + pzemAddrRead, RED, BLUE);
 #endif
     }
 }
 
-// Инициализация выхода из сети
 void zclApp_LeaveNetwork(void) {
     zclApp_ResetAttributesToDefaultValues();
 
@@ -736,9 +719,19 @@ void zclApp_LeaveNetwork(void) {
 
 // Report measured data
 void zclApp_ReportData(void) {
+    firstRead[0] = firstRead[1] = firstRead[2] = TRUE;
+    for (uint8 i = 0; i < 3; i++) {
+        zcl_measured[i].voltage = measured[i].voltage;
+        zcl_measured[i].current = measured[i].current;
+        zcl_measured[i].power = measured[i].power;
+        zcl_measured[i].energy = measured[i].energy;
+        zcl_measured[i].frequency = measured[i].frequency;
+        zcl_measured[i].powerFactor = measured[i].powerFactor;
+    }
+
     // one call for all attributes report
     ZStatus_t res = bdb_RepChangedAttrValue(APP_ENDPOINT1, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY);
-    LREP("RepData - %d\r\n", res);
+    LREP("RepData - %d f: %d %d %d\r\n", res, measured[0].frequency, measured[1].frequency, measured[2].frequency);
     bdb_RepChangedAttrValue(APP_ENDPOINT2, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY);
     bdb_RepChangedAttrValue(APP_ENDPOINT3, ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT, ATTRID_ELECTRICAL_MEASUREMENT_AC_FREQUENCY);
 }

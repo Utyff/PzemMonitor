@@ -217,11 +217,15 @@ bool Pzem_getData(Pzem_measurement_t *measurement) {
     measurement->voltage = (uint16) response[4] | (uint16) response[3] << 8;
     // checking that the data is correct
 
-    measurement->current = (uint32) response[6] | (uint32) response[5] << 8 | (uint32) response[8] << 16 | (uint32) response[7] << 24;
-    measurement->power = (uint32) response[10] | (uint32) response[9] << 8 | (uint32) response[12] << 16 | (uint32) response[11] << 24;
+    uint32 cc = (uint32) response[6] | (uint32) response[5] << 8 | (uint32) response[8] << 16 | (uint32) response[7] << 24;
+    measurement->current = cc;
+    uint32 pp = (uint32) response[10] | (uint32) response[9] << 8 | (uint32) response[12] << 16 | (uint32) response[11] << 24;
+    measurement->power = pp;
     measurement->energy = (uint32) response[14] | (uint32) response[13] << 8 | (uint32) response[16] << 16 | (uint32) response[15] << 24;
     measurement->frequency = (uint16) response[18] | (uint16) response[17] << 8;
-    measurement->powerFactor = (uint16) response[20] | (uint16) response[19] << 8;
+    uint16 pf = (uint16) response[20] | (uint16) response[19] << 8;
+    measurement->powerFactor = pf;
+    LREP("c:%ld p:%ld f:%d; ", cc, pp, pf);
 
     pzemRequestState = Idle;
     return TRUE;

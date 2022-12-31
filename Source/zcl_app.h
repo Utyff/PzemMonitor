@@ -72,7 +72,7 @@ extern CONST uint8 zclApp_NumAttributes3;
 
 extern uint32 zclApp_GenTime_TimeUTC;
 
-extern Pzem_measurement_t measurement[3];
+extern Pzem_measurement_t zcl_measured[3];
 
 /*********************************************************************
  * FUNCTIONS
